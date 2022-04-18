@@ -24,6 +24,11 @@
         <p>
             Contenu de la page
         </p>
+        
+        <!-- <button class="btn btn-primary" id="cameraPicture">Detect QR code</button> -->
+        <video id="video" class="text-center">
+
+        </video>
         </br>
     </div>
     <div class="container index-buttons mb-5">
@@ -35,6 +40,7 @@
         style="text-decoration: none;">© 2022 Université Haute-Alsace</a>
     <script src="cordova.js"></script>
     <script src="js/decode.js"></script>
+    <script async src="js/opencv.js" type="text/javascript" onload="initOpenCV();"></script>
 </body>
 
 </html>
