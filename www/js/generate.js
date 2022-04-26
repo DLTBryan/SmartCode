@@ -39,6 +39,12 @@ function generateQRCode() {
     createMarqueur(0, 0);
     createMarqueur(nbPixels - 5, 0);
     createMarqueur(0, nbPixels - 5);
+
+    // Ajout du type du QR Code (2 caractères maximum)
+    addType("SD");
+
+    // drawQRCode(context);
+
     console.log(data);
 }
 
@@ -65,4 +71,39 @@ function createMarqueur(ligne, colonne) {
     for(i = 0; i < 5; i++) {
         data[ligne][colonne + i] = 1;
     }
+}
+
+function addType(identificateur) {
+    let binary = ASCIItoBinary(identificateur);
+    if(binary.length != 16) {
+        console.log("Erreur, type incorrect (2 caractères maximum");
+        return;
+    }
+    for(i = 0; i < binary.length; i++) {
+        data[0][i + 6] = binary[i];
+    }
+}
+
+function ASCIItoBinary(input) {
+    let result = new Array(input.length * 8);
+    // Curseur pour connaître la position dans l'array
+    let cursor = 0;
+    // Pour chaque caractère
+    for(i = 0; i < input.length; i++) {
+        let binary = input[i].charCodeAt(0).toString(2);
+        // Ajout des 0 avant le binaire pour avoir une taille de 8
+        let tmp = "";
+        let length = binary.length;
+        while(length < 8) {
+            tmp += "0";
+            length++;
+        }
+        binary = tmp + binary;
+        // Ajout dans le résultat
+        for(j = 0; j < 8; j++) {
+            result[cursor] = parseInt(binary[j]);
+            cursor++;
+        }
+    }
+    return result;
 }
