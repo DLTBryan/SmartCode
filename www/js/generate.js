@@ -25,7 +25,7 @@ function generateQRCode() {
     var canvas = document.getElementById("canvas");
 
     // Définition de la taille du canvas
-    canvas.width = nbPixels * sizePixel + 4 * sizePixel;
+    canvas.width = nbPixels * sizePixel + 8;
     canvas.height = canvas.width;
 
     // Récupération du contexte du canvas
@@ -43,9 +43,11 @@ function generateQRCode() {
     // Ajout du type du QR Code (2 caractères maximum)
     addType("SD");
 
-    // drawQRCode(context);
+    fillQRCode(context, input);
 
     console.log(data);
+
+    drawQRCode(context);
 }
 
 function createMarqueur(ligne, colonne) {
@@ -106,4 +108,49 @@ function ASCIItoBinary(input) {
         }
     }
     return result;
+}
+
+function drawQRCode(context) {
+    // Affichage de chaque pixel en fonction de la valeur dans data
+    for(i = 0; i < nbPixels; i++) {
+        for(j = 0; j < nbPixels; j++) {
+            drawPixel(context, i, j, data[i][j]);
+        }
+    }
+    // Affichage des marges droites et en dessous
+    for(i = 0; i < nbPixels; i++) {
+        drawPixel(context, i, nbPixels, 0);
+        drawPixel(context, nbPixels, i, 0);
+    }
+}
+
+// Fonction pour afficher un pixel avec un rectangle dans le canvas
+function drawPixel(context, ligne, colonne, couleur) {
+    // Définition de la couleur
+    if(couleur == 1) {
+        context.fillStyle = "black";
+    } else {
+        context.fillStyle = "white";
+    }
+    // Récupération des coordonnées du pixel (+ 4 pour les marges)
+    var x = colonne * sizePixel + 4;
+    var y = ligne * sizePixel + 4;
+    var x1 = colonne * sizePixel + sizePixel + 4;
+    var y1 = ligne * sizePixel + sizePixel + 4;
+    context.fillRect(x, y, x1, y1);
+}
+
+function fillQRCode(context, input) {
+    let binary = ASCIItoBinary(input);
+    let cursor = 0;
+    for(j = nbPixels - 1; j > 4; j--) {
+        for(i = nbPixels - 1; i > 4; i--) {
+            if(binary.length >= cursor) {
+                data[i][j] = binary[cursor];
+            } else {
+                data[i][j] = (cursor % 2 != 0);
+            }
+            cursor++;
+        }
+    }
 }
