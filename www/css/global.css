@@ -104,11 +104,12 @@ h1 {
     font-family: "ThiccBoi";
     background-color: #7AB5B6 !important;
     border-color: #619191 !important;
-    color: #404F4F !important;
+    color: #283131 !important;
 }
 
 .index-buttons {
     position: absolute !important;
+    width: 100%;
     bottom: 0 !important;
 }
 

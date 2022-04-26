@@ -21,12 +21,15 @@
         <img src="img/encode.png" alt="..." class="img-thumbnail rounded mx-auto d-block">
     </div>
     <div class="container contenu text-center">
-        <p>
-            Contenu de la page
-        </p>
+        <form id="form" class="mt-2 mb-2" action="generate.html" method="POST">
+            <div class="input-group">
+                <input type="text" name="text" class="form-control" placeholder="Texte à encoder">
+            </div>
+            <button type="submit" name="generate" class="btn btn-primary btn-lg text-uppercase m-3">Generer QR CODE</button>
+        </form>
         </br>
     </div>
-    <div class="container index-buttons mb-5">
+    <div class="index-buttons mb-5">
         <div class="col-md-12 text-center">
             <button class="btn btn-primary btn-lg text-uppercase" id="retour">Retour</button>
         </div>
