@@ -53,7 +53,6 @@ function initVideo(){
 }
 function startVideoProcessing(){
   if (!streaming) { console.warn("Please startup your webcam"); return; }
-  //stopVideoProcessing();
   dstC1 = new cv.Mat(height, width, cv.CV_8UC1);
   src = new cv.Mat(height, width, cv.CV_8UC4);
   requestAnimationFrame(processVideo);
@@ -78,4 +77,8 @@ function threshImage(src){
 
 function captureCode(){
   console.log("Click");
+}
+
+function initOpenCV(){
+  initVideo();
 }
