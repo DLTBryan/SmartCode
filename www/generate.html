@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <!-- 
-    Page d'accueil de l'application
+    Page de génération du QR Code de l'application
  -->
 
 <head>
@@ -17,15 +17,26 @@
 </head>
 
 <body>
+    <div class="p-0 mb-1">
+        <img src="img/encode.png" alt="..." class="img-thumbnail rounded mx-auto d-block">
+    </div>
+    <div class="d-flex justify-content-center m-1 text-center">
+        <canvas id="canvas">
+            Désolé, une erreur est survenue..
+        </canvas>
+    </div>
     <div class="index-buttons mb-5">
         <div class="col-md-12 text-center">
+            <button class="btn btn-primary btn-lg text-uppercase" id="download">Telecharger</button>
+        </div>
+        <div class="col-md-12 text-center mt-2">
             <button class="btn btn-primary btn-lg text-uppercase" id="retour">Retour</button>
         </div>
     </div>
     <a class="text-capitalize text-center m-0 mb-1" id="copyright" href="https://www.uha.fr/" target="_blank"
         style="text-decoration: none;">© 2022 Université Haute-Alsace</a>
     <script src="cordova.js"></script>
-    <script src="js/encode.js"></script>
+    <script src="js/generate.js"></script>
 </body>
 
 </html>
