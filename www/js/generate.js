@@ -25,7 +25,7 @@ var cursor = 0;
 for(i = 0; i < nbPixels; i++) {
     for(j = 0; j < nbPixels; j++) {
         // Si on est pas dans le timing pattern
-        if(i != 4 && j != 4) {
+        if(i != 6 && j != 6) {
             data[i][j] = Math.floor(Math.random() * Math.floor(2));;
         } else {
             data[i][j] = + (cursor % 2 == 0);
@@ -59,8 +59,8 @@ function generateQRCode() {
 
     // Création des 3 marqueurs de positionnement
     createMarqueur(0, 0);
-    createMarqueur(nbPixels - 5, 0);
-    createMarqueur(0, nbPixels - 5);
+    createMarqueur(nbPixels - 7, 0);
+    createMarqueur(0, nbPixels - 7);
 
     // Ajout du type du QR Code (2 caractères maximum)
     addType("SD");
@@ -82,33 +82,37 @@ function generateQRCode() {
 
 function createMarqueur(ligne, colonne) {
     // Création des marges pour les marqueurs de position
-    for(i = -1; i < 6; i++) {
-        for(j = -1; j < 6; j++) {
+    for(i = -1; i < 8; i++) {
+        for(j = -1; j < 8; j++) {
             if(ligne + i < nbPixels && ligne + i >= 0 && colonne + j < nbPixels && colonne + j >= 0) {
                 data[ligne + i][colonne + j] = 0;
             }
         }
     }
     // Première rangée du marqueur
-    for(i = 0; i < 5; i++) {
+    for(i = 0; i < 7; i++) {
         data[ligne][colonne + i] = 1;
     }
     // Deuxième rangée du marqueur
     ligne++;
     data[ligne][colonne] = 1;
-    data[ligne][colonne + 4] = 1;
-    // Troisième rangée du marqueur
+    data[ligne][colonne + 6] = 1;
+    // Troisième / quatrième et cinquième rangée du marqueur
+    for(i = 0; i < 3; i++) {
+        ligne++;
+        data[ligne][colonne] = 1;
+        data[ligne][colonne + 2] = 1;
+        data[ligne][colonne + 3] = 1;
+        data[ligne][colonne + 4] = 1;
+        data[ligne][colonne + 6] = 1;
+    }
+    // Sixième rangée du marqueur
     ligne++;
     data[ligne][colonne] = 1;
-    data[ligne][colonne + 2] = 1;
-    data[ligne][colonne + 4] = 1;
-    // Quatrième rangée du marqueur
-    ligne++;
-    data[ligne][colonne] = 1;
-    data[ligne][colonne + 4] = 1;
+    data[ligne][colonne + 6] = 1;
     // Dernière rangée du marqueur
     ligne++;
-    for(i = 0; i < 5; i++) {
+    for(i = 0; i < 7; i++) {
         data[ligne][colonne + i] = 1;
     }
 }
@@ -121,7 +125,7 @@ function addType(identificateur) {
         return;
     }
     for(i = 0; i < binary.length; i++) {
-        data[0][i + 6] = binary[i];
+        data[0][i + 8] = binary[i];
     }
 }
 
@@ -186,8 +190,8 @@ function encode(input) {
     let cursor = 0;
     // Curseur pour le caractère EXT
     let EXTCursor = 0;
-    for(j = nbPixels - 1; j > 5; j--) {
-        for(i = nbPixels - 1; i > 5; i--) {
+    for(j = nbPixels - 1; j > 7; j--) {
+        for(i = nbPixels - 1; i > 7; i--) {
             // Si le curseur n'est pas arrivé à la fin du mot
             if(binary.length > cursor) {
                 data[i][j] = + binary[cursor];
@@ -216,8 +220,8 @@ function decode() {
     let cursor = 0;
     // Curseur pour parcourir la lettre
     let letterCursor = 0;
-    for(j = nbPixels - 1; j > 5; j--) {
-        for(i = nbPixels - 1; i > 5; i--) {
+    for(j = nbPixels - 1; j > 7; j--) {
+        for(i = nbPixels - 1; i > 7; i--) {
             // Création de la lettre codée sous 8 bits
             if(letterCursor <= 7) {
                 letter[letterCursor] = data[i][j];
@@ -248,9 +252,9 @@ function decode() {
 // Applique le masque sur tout le QR Code sauf le timing pattern et les marqueurs de position
 function mask() {
     // Applique le masque sur la marge haute 
-    for(i = 0; i < 6; i++) {
-        for(j = 6; j < nbPixels - 6; j++) {
-            if(i != 4) {
+    for(i = 0; i < 8; i++) {
+        for(j = 8; j < nbPixels - 8; j++) {
+            if(i != 6) {
                 if((i + j) % 2 == 0) {
                     data[i][j] = + !data[i][j];
                 }
@@ -258,9 +262,9 @@ function mask() {
         }
     }
     // Aplique le masque sr la marge gauche
-    for(i = 6; i < nbPixels - 6; i++) {
-        for(j = 0; j < 6; j++) {
-            if(j != 4) {
+    for(i = 8; i < nbPixels - 8; i++) {
+        for(j = 0; j < 8; j++) {
+            if(j != 6) {
                 if((i + j) % 2 == 0) {
                     data[i][j] = + !data[i][j];
                 }
@@ -270,7 +274,7 @@ function mask() {
     // Applique le masque sur le contenu du QR Code
     for(i = 0; i < nbPixels; i++) {
         for(j = 0; j < nbPixels; j++) {
-            if(i > 5 && j > 5) {
+            if(i > 7 && j > 7) {
                 if((i + j) % 2 == 0) {
                     data[i][j] = + !data[i][j];
                 }
