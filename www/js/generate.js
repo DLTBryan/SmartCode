@@ -8,6 +8,11 @@ var nbPixels = 32;
 // Taille d'un pixel (écrit en dur mais modulable)
 var sizePixel = 5;
 
+// Caractère ASCII de fin de mot
+let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
+// Fonction pour comparer 2 arrays (utilisé pour détecter la fin du texte)
+const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 // Initialisation du tableau de données binaires
 var data = new Array(nbPixels);
 for(i = 0; i < nbPixels; i++) {
@@ -60,11 +65,15 @@ function generateQRCode() {
     // Ajout du type du QR Code (2 caractères maximum)
     addType("SD");
 
-    fillQRCode(input);
+    // Encodage du QR Code avec l'entrée utilisateur
+    encode(input);
 
-    console.log(data);
-
+    // Affichage du QR Code
     drawQRCode(context);
+
+    // Fonction pour décoder le QR Code (à utiliser dans decode.html);
+    let result = decode();
+    console.log(result);
 }
 
 function createMarqueur(ligne, colonne) {
@@ -166,24 +175,68 @@ function drawPixel(context, ligne, colonne, couleur) {
     context.fillRect(x, y, x1, y1);
 }
 
-function fillQRCode(input) {
+function encode(input) {
+    // Récupération de l'entrée en binaire
     let binary = ASCIItoBinary(input);
+    // Curseur pour le mot à entrer
     let cursor = 0;
-    // let tmpCursor = 0;
-    // let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
+    // Curseur pour le caractère EXT
+    let EXTCursor = 0;
     for(j = nbPixels - 1; j > 5; j--) {
         for(i = nbPixels - 1; i > 5; i--) {
+            // Si le curseur n'est pas arrivé à la fin du mot
             if(binary.length > cursor) {
                 data[i][j] = + binary[cursor];
             } else {
-                break;
-                // if(binary.length + 8 > cursor) {
-                    
-                // } else {
-                //     break;
-                // }
+                // Si le curseur n'est pas arrivé à la fin du mot + le caractère EXT
+                if(binary.length + 8 > cursor) {
+                    // On ajoute le caractère EXT
+                    data[i][j] = + EXT[EXTCursor];
+                    EXTCursor++;
+                } else {
+                    break;
+                }
             }
             cursor++;
         }
     }
+}
+
+// Décodage du QR Code
+function decode() {
+    // Le tableau de mots binaires
+    let binary = new Array();
+    // La lettre en binaire
+    let letter = new Array(8);
+    // Curseur pour parcourir les données
+    let cursor = 0;
+    // Curseur pour parcourir la lettre
+    let letterCursor = 0;
+    for(j = nbPixels - 1; j > 5; j--) {
+        for(i = nbPixels - 1; i > 5; i--) {
+            // Création de la lettre codée sous 8 bits
+            if(letterCursor <= 7) {
+                letter[letterCursor] = data[i][j];
+                letterCursor++;
+            } else {
+                // Si la lettre est le caractère EXT, on arrête de décoder
+                if(equals(letter, EXT)) {
+                    break;
+                }
+                // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
+                binary[cursor] = letter;
+                letterCursor = 0;
+                letter = new Array(8);
+                letter[0] = data[i][j];
+                letterCursor++;
+                cursor++;
+            }
+        }
+    }
+    // Conversion du tableau binaire en caractères ASCII
+    let result = "";
+    for(i = 0; i < binary.length; i++) {
+        result += String.fromCharCode(parseInt(binary[i].join(''), 2));
+    }
+    return result;
 }
