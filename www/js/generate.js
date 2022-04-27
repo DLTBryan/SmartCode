@@ -9,9 +9,26 @@ var nbPixels = 32;
 var sizePixel = 5;
 
 // Initialisation du tableau de données binaires
-var data = new Array(nbPixels).fill(0);
+var data = new Array(nbPixels);
 for(i = 0; i < nbPixels; i++) {
-    data[i] = new Array(nbPixels).fill(0);
+    data[i] = new Array(nbPixels);
+}
+
+// Remplissage du QR Code avec de la donnée aléatoire
+var start = 0;
+var cursor = 0;
+for(i = 0; i < nbPixels; i++) {
+    for(j = 0; j < nbPixels; j++) {
+        // Si on est pas dans le timing pattern
+        if(i != 4 && j != 4) {
+            data[i][j] = Math.floor(Math.random() * Math.floor(2));;
+        } else {
+            data[i][j] = + (cursor % 2 == 0);
+            cursor++;
+        }
+    }
+    start = !start;
+    cursor = start;
 }
 
 generateQRCode();
@@ -43,7 +60,7 @@ function generateQRCode() {
     // Ajout du type du QR Code (2 caractères maximum)
     addType("SD");
 
-    fillQRCode(context, input);
+    fillQRCode(input);
 
     console.log(data);
 
@@ -51,6 +68,14 @@ function generateQRCode() {
 }
 
 function createMarqueur(ligne, colonne) {
+    // Création des marges pour les marqueurs de position
+    for(i = -1; i < 6; i++) {
+        for(j = -1; j < 6; j++) {
+            if(ligne + i < nbPixels && ligne + i >= 0 && colonne + j < nbPixels && colonne + j >= 0) {
+                data[ligne + i][colonne + j] = 0;
+            }
+        }
+    }
     // Première rangée du marqueur
     for(i = 0; i < 5; i++) {
         data[ligne][colonne + i] = 1;
@@ -75,10 +100,11 @@ function createMarqueur(ligne, colonne) {
     }
 }
 
+// Ajout du type codé sur 2 caractères
 function addType(identificateur) {
     let binary = ASCIItoBinary(identificateur);
     if(binary.length != 16) {
-        console.log("Erreur, type incorrect (2 caractères maximum");
+        console.log("Erreur, type incorrect (2 caractères maximum)");
         return;
     }
     for(i = 0; i < binary.length; i++) {
@@ -140,15 +166,22 @@ function drawPixel(context, ligne, colonne, couleur) {
     context.fillRect(x, y, x1, y1);
 }
 
-function fillQRCode(context, input) {
+function fillQRCode(input) {
     let binary = ASCIItoBinary(input);
     let cursor = 0;
-    for(j = nbPixels - 1; j > 4; j--) {
-        for(i = nbPixels - 1; i > 4; i--) {
-            if(binary.length >= cursor) {
-                data[i][j] = binary[cursor];
+    // let tmpCursor = 0;
+    // let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
+    for(j = nbPixels - 1; j > 5; j--) {
+        for(i = nbPixels - 1; i > 5; i--) {
+            if(binary.length > cursor) {
+                data[i][j] = + binary[cursor];
             } else {
-                data[i][j] = (cursor % 2 != 0);
+                break;
+                // if(binary.length + 8 > cursor) {
+                    
+                // } else {
+                //     break;
+                // }
             }
             cursor++;
         }
