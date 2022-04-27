@@ -68,6 +68,10 @@ function generateQRCode() {
     // Encodage du QR Code avec l'entrée utilisateur
     encode(input);
 
+    // On applique le masque 2 fois pour tester
+    mask();
+    mask();
+
     // Affichage du QR Code
     drawQRCode(context);
 
@@ -239,4 +243,38 @@ function decode() {
         result += String.fromCharCode(parseInt(binary[i].join(''), 2));
     }
     return result;
+}
+
+// Applique le masque sur tout le QR Code sauf le timing pattern et les marqueurs de position
+function mask() {
+    // Applique le masque sur la marge haute 
+    for(i = 0; i < 6; i++) {
+        for(j = 6; j < nbPixels - 6; j++) {
+            if(i != 4) {
+                if((i + j) % 2 == 0) {
+                    data[i][j] = + !data[i][j];
+                }
+            }
+        }
+    }
+    // Aplique le masque sr la marge gauche
+    for(i = 6; i < nbPixels - 6; i++) {
+        for(j = 0; j < 6; j++) {
+            if(j != 4) {
+                if((i + j) % 2 == 0) {
+                    data[i][j] = + !data[i][j];
+                }
+            }
+        }
+    }
+    // Applique le masque sur le contenu du QR Code
+    for(i = 0; i < nbPixels; i++) {
+        for(j = 0; j < nbPixels; j++) {
+            if(i > 5 && j > 5) {
+                if((i + j) % 2 == 0) {
+                    data[i][j] = + !data[i][j];
+                }
+            }
+        }
+    }
 }
