@@ -3,32 +3,15 @@ document.getElementById("retour").addEventListener("click", () => {
     window.location.href = "./encode.html";
 });
 
+// Gestion du partage du QR Code
 document.getElementById("download").addEventListener("click", () => {
-    var canvas, imageDataUrl, imageData;
-    var img = new Image();
-    img.onload = function() {
-        canvas = document.getElementById("canvas");
-        try {
-            imageDataUrl = canvas.toDataURL('image/jpeg', 1.0);
-            imageData = imageDataUrl.replace(/data:image\/jpeg;base64,/, '');
-            cordova.exec(
-                success,
-                error,
-                'Canvas2ImagePlugin',
-                'saveImageDataToLibrary',
-                [imageData]
-            );
-        }
-        catch(e) {
-            error(e.message);
-        }
+    var options = {
+        message: 'Voici mon SmartQRCode :',
+        subject: 'QRCode',
+        files: [document.getElementById("canvas").toDataURL()],
+        chooserTitle: 'Choisir une application',
     };
-    try {
-        img.src = url;
-    }
-    catch(e) {
-        error(e.message);
-    }
+    window.plugins.socialsharing.shareWithOptions(options);
 });
 
 // Nombre de pixels (écrit en dur mais modulable)
@@ -247,6 +230,7 @@ function decode() {
     if(getType() != type) {
         return "Mauvais type de QR Code";
     }
+
     // Le tableau de mots binaires
     let binary = new Array();
     // La lettre en binaire
