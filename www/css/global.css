@@ -135,6 +135,8 @@ h1 {
     border: 1px solid black;
 }
 
+
+
 @font-face {
     font-family: "ThiccBoi";
     src: url("fonts/Webfont/THICCCBOI-SemiBold.woff2") format("woff2"),
@@ -146,3 +148,20 @@ h1 {
     src: url("fonts/Webfont/THICCCBOI-Regular.woff2") format("woff2"),
         url("fonts/TTF/THICCCBOI-Regular.ttf") format("ttf");
 }
+
+@media (width >= 1080px) {
+    #canvasOutput{
+        width: 40vw;
+        height: 41vh;
+        border: 1px solid black;
+    }
+}
+
+@media (320px <= width <= 480px) {
+    #canvasOutput{
+        width: 50vw;
+        height: 38vh;
+        border: 1px solid black;
+    }
+}
+
