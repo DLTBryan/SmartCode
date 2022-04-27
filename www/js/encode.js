@@ -4,12 +4,13 @@ document.getElementById("retour").addEventListener("click", () => {
 });
 
 // Récupération de la sauvegarde de l'entrée utilisateur
-document.getElementById("input").value = localStorage.getItem("input").toString();
+if (window.localStorage.getItem("input") != null) {
+    document.getElementById("input").value = window.localStorage.getItem("input").toString();
+}
 
 // Gestion de la génération de QR Code
-document.getElementById("form").addEventListener('submit', (event) => {
-    event.preventDefault();
+document.getElementById("generate").addEventListener("click", () => {
     // Définition de l'entrée utilisateur dans le localStorage
-    localStorage.setItem("input", document.getElementById("input").value);
+    window.localStorage.setItem("input", document.getElementById("input").value);
     window.location.href = "./generate.html";
 });

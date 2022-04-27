@@ -26,13 +26,15 @@
         </p>
         
         <!-- <button class="btn btn-primary" id="cameraPicture">Detect QR code</button> -->
-        <video id="video" class="text-center">
-
+        <video id="video" style="display: none;">
         </video>
+
+        <canvas class="center-block" id="canvasOutput" width=320 height=240></canvas>
         </br>
     </div>
     <div class="index-buttons mb-5">
         <div class="col-md-12 text-center">
+            <button class="btn btn-primary btn-lg text-uppercase" id="capture" >Capture</button>
             <button class="btn btn-primary btn-lg text-uppercase" id="retour">Retour</button>
         </div>
     </div>

@@ -71,7 +71,7 @@ generateQRCode();
 // Fonction pour générer le QR Code
 function generateQRCode() {
     // Récupération de l'entrée utilisateur
-    var input = localStorage.getItem("input");
+    var input = window.localStorage.getItem("input");
 
     // Récupération du canvas de la page HTML
     var canvas = document.getElementById("canvas");
