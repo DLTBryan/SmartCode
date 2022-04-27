@@ -3,6 +3,34 @@ document.getElementById("retour").addEventListener("click", () => {
     window.location.href = "./encode.html";
 });
 
+document.getElementById("download").addEventListener("click", () => {
+    var canvas, imageDataUrl, imageData;
+    var img = new Image();
+    img.onload = function() {
+        canvas = document.getElementById("canvas");
+        try {
+            imageDataUrl = canvas.toDataURL('image/jpeg', 1.0);
+            imageData = imageDataUrl.replace(/data:image\/jpeg;base64,/, '');
+            cordova.exec(
+                success,
+                error,
+                'Canvas2ImagePlugin',
+                'saveImageDataToLibrary',
+                [imageData]
+            );
+        }
+        catch(e) {
+            error(e.message);
+        }
+    };
+    try {
+        img.src = url;
+    }
+    catch(e) {
+        error(e.message);
+    }
+});
+
 // Nombre de pixels (écrit en dur mais modulable)
 var nbPixels = 32;
 // Taille d'un pixel (écrit en dur mais modulable)
