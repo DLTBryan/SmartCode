@@ -13,6 +13,8 @@ let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
 // Fonction pour comparer 2 arrays (utilisé pour détecter la fin du texte)
 const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
+var type = "SD";
+
 // Initialisation du tableau de données binaires
 var data = new Array(nbPixels);
 for(i = 0; i < nbPixels; i++) {
@@ -63,14 +65,10 @@ function generateQRCode() {
     createMarqueur(0, nbPixels - 7);
 
     // Ajout du type du QR Code (2 caractères maximum)
-    addType("SD");
+    addType(type);
 
     // Encodage du QR Code avec l'entrée utilisateur
     encode(input);
-
-    // On applique le masque 2 fois pour tester
-    mask();
-    mask();
 
     // Affichage du QR Code
     drawQRCode(context);
@@ -208,10 +206,19 @@ function encode(input) {
             cursor++;
         }
     }
+    // Application du masque lors de l'encodage
+    mask();
 }
 
 // Décodage du QR Code
 function decode() {
+    // Application du masque pour décoder le QR Code
+    mask();
+
+    // Vérification du type du QR Code
+    if(getType() != type) {
+        return "Mauvais type de QR Code";
+    }
     // Le tableau de mots binaires
     let binary = new Array();
     // La lettre en binaire
@@ -244,6 +251,38 @@ function decode() {
     // Conversion du tableau binaire en caractères ASCII
     let result = "";
     for(i = 0; i < binary.length; i++) {
+        result += String.fromCharCode(parseInt(binary[i].join(''), 2));
+    }
+    return result;
+}
+
+function getType() {
+    // Le tableau de mots binaires
+    let binary = new Array(2);
+    // La lettre en binaire
+    let letter = new Array(8);
+    // Curseur pour parcourir les données
+    let cursor = 0;
+    // Curseur pour parcourir la lettre
+    let letterCursor = 0;
+    for(i = 0; i <= 16; i++) {
+        // Création de la lettre codée sous 8 bits
+        if(letterCursor <= 7) {
+            letter[letterCursor] = data[0][8 + i];
+            letterCursor++;
+        } else {
+            // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
+            binary[cursor] = letter;
+            letterCursor = 0;
+            letter = new Array(8);
+            letter[0] = data[0][8 + i];
+            letterCursor++;
+            cursor++;
+        }
+    }
+    // Conversion du tableau binaire en caractères ASCII
+    let result = "";
+    for(i = 0; i < 2; i++) {
         result += String.fromCharCode(parseInt(binary[i].join(''), 2));
     }
     return result;
