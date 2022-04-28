@@ -117,8 +117,6 @@ function findQRCode(src){
   cv.Canny(blurredGaussMat, edgedMat, 100,200);
 
   cv.findContours(edgedMat, contourMat, hierarchie, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
-  
-  cv.imshow("canvasResultTEST", hierarchie);
 
   let positionMarkers = findPositionMarkers(ApproxPositionMarkers());
   
@@ -147,8 +145,8 @@ function findQRCode(src){
     let qrWidth = qrRec.size.width;
     let qrHeight = qrRec.size.height;
     let qrVertices = cv.RotatedRect.points(qrRec);
-    for (let i = 0; i < 4; ++i)
-      cv.line(src, qrVertices[i], qrVertices[(i+1) % 4], [255, 0, 255, 255], 2);
+
+    //drawMarker(qrVertices);
 
     let length = (qrWidth + qrHeight) / 2;
     let qrx = qrRec.center.x - length / 2;
@@ -173,7 +171,11 @@ function findQRCode(src){
       cv.warpPerspective(clone, clone, M, clone.size());
       M.delete(); srcTri.delete(); dstTri.delete();
       let qrRoi = clone.roi(new cv.Rect(qrx, qry, length, length));
-      cv.imshow("canvasResult", qrRoi);
+
+      let array = extractInformation(qrRoi);
+      //cv.imshow("canvasResult", qrRoi);
+      cv.imshow("canvasResult", thresholdedImage);
+      console.log(array);
       qrRoi.delete();
       clone.delete();
     }
@@ -189,6 +191,30 @@ function findQRCode(src){
   return src;
 }
 
+function extractInformation(qrRoi){
+  let bits = new Array();
+
+  cv.cvtColor(qrRoi, gryMat, cv.COLOR_RGB2GRAY, 0);
+  cv.threshold(gryMat, thresholdedImage, 100, 255, cv.THRESH_BINARY);
+
+
+  for(let i = 0; i < thresholdedImage.cols; ++i){
+    let tmp = new Array();
+    for(let j = 0; j < thresholdedImage.rows; ++j){
+      let p = thresholdedImage.ucharPtr(i, j)[0];
+      if(p === 255){
+        tmp.push(0);
+      }else{
+        tmp.push(1);
+      }
+    }
+    bits.push(tmp);
+  }
+
+  console.log(bits.length);
+  return bits;
+
+}
 
 function transformDetection(array, center, qrPoints){
   let transformed = new Array(4);
@@ -208,8 +234,20 @@ function transformDetection(array, center, qrPoints){
     }
   }
 
-  console.log(transformedCoords);
-  console.log(array);
+  // cv.circle(src, transformedCoords[0], 5, [255, 0, 0, 255], 2);
+  // cv.circle(src, transformedCoords[1], 5, [0, 255, 0, 255], 2);
+  // cv.circle(src, transformedCoords[2], 5, [0, 0, 255, 255], 2);
+  // cv.circle(src, transformedCoords[3], 5, [255, 255, 255, 255], 2);
+
+
+  // cv.circle(src, array[0], 5, [255, 0, 0, 255], 2);
+  // cv.circle(src, array[1], 5, [0, 255, 0, 255], 2);
+  // cv.circle(src, array[2], 5, [0, 0, 255, 255], 2);
+  // cv.circle(src, array[3], 5, [255, 255, 255, 255], 2);
+
+  // console.log(transformedCoords);
+
+  // console.log(array);
 
     for(let i = 0; i < qrPoints.length; i+=4){
       //Top Left
@@ -415,7 +453,7 @@ function findPositionMarkers(approx){
       if(isCorrectSquare(ratio)) {
         let vertices = cv.RotatedRect.points(rotatedRect);
         superPixels.push(vertices);
-        drawPositionMarkers(vertices);
+        // drawPositionMarkers(vertices);
       }
   }
   return superPixels;
@@ -489,6 +527,11 @@ function drawTiming(points){
   for (let i = 0; i < points.length; ++i){
     cv.line(src, points[i], points[(i+1) % points.length], [0, 0, 255, 255], 2);
   }
+}
+
+function drawMarker(vertices){
+  for (let i = 0; i < 4; ++i)
+    cv.line(src, vertices[i], vertices[(i+1) % 4], [255, 0, 255, 255], 2)
 }
 
 function captureCode(){
