@@ -177,6 +177,14 @@ function findQRCode(src){
       //cv.imshow("canvasResult", qrRoi);
       cv.imshow("canvasResult", thresholdedImage);
       console.log(array);
+      // array = removeMargins(array);
+      console.log(array);
+      // let result, output = decode(array);
+      // if(result) {
+      //   console.log(output);
+      // } else {
+      //   console.log("erreur");
+      // }
       qrRoi.delete();
       clone.delete();
     }
@@ -539,4 +547,195 @@ function captureCode(){
 
 function initOpenCV(){
   initVideo();
+}
+
+// Partie décodage
+
+// Nombre de pixels (écrit en dur mais modulable)
+var nbPixels = 32;
+// Taille d'un pixel (écrit en dur mais modulable)
+var sizePixel = 5;
+
+// Caractère ASCII de fin de mot
+let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
+// Fonction pour comparer 2 arrays (utilisé pour détecter la fin du texte)
+const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+var type = "SD";
+
+function ASCIItoBinary(input) {
+  let result = new Array(input.length * 8);
+  // Curseur pour connaître la position dans l'array
+  let cursor = 0;
+  // Pour chaque caractère
+  for(i = 0; i < input.length; i++) {
+      let binary = input[i].charCodeAt(0).toString(2);
+      // Ajout des 0 avant le binaire pour avoir une taille de 8
+      let tmp = "";
+      let length = binary.length;
+      while(length < 8) {
+          tmp += "0";
+          length++;
+      }
+      binary = tmp + binary;
+      // Ajout dans le résultat
+      for(j = 0; j < 8; j++) {
+          result[cursor] = parseInt(binary[j]);
+          cursor++;
+      }
+  }
+  return result;
+}
+
+// Décodage du QR Code
+function decode(data) {
+  // Application du masque pour décoder le QR Code
+  mask();
+
+  // Vérification du type du QR Code
+  if(getType() != type) {
+      return false, "Mauvais type de QR Code";
+  }
+
+  // Le tableau de mots binaires
+  let binary = new Array();
+  // La lettre en binaire
+  let letter = new Array(8);
+  // Curseur pour parcourir les données
+  let cursor = 0;
+  // Curseur pour parcourir la lettre
+  let letterCursor = 0;
+  for(j = nbPixels - 1; j > 7; j--) {
+      for(i = nbPixels - 1; i > 7; i--) {
+          // Si on est pas dans l'emplacement du marqueur d'alignement
+          if(!inAlignMarqu(i, j)) {
+              // Création de la lettre codée sous 8 bits
+              if(letterCursor <= 7) {
+                  letter[letterCursor] = data[i][j];
+                  letterCursor++;
+              } else {
+                  // Si la lettre est le caractère EXT, on arrête de décoder
+                  if(equals(letter, EXT)) {
+                      break;
+                  }
+                  // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
+                  binary[cursor] = letter;
+                  letterCursor = 0;
+                  letter = new Array(8);
+                  letter[0] = data[i][j];
+                  letterCursor++;
+                  cursor++;
+              }
+          }
+      }
+  }
+  // Conversion du tableau binaire en caractères ASCII
+  let result = "";
+  for(i = 0; i < binary.length; i++) {
+      result += String.fromCharCode(parseInt(binary[i].join(''), 2));
+  }
+  return true, result;
+}
+
+function getType() {
+  // Le tableau de mots binaires
+  let binary = new Array(2);
+  // La lettre en binaire
+  let letter = new Array(8);
+  // Curseur pour parcourir les données
+  let cursor = 0;
+  // Curseur pour parcourir la lettre
+  let letterCursor = 0;
+  for(i = 0; i <= 16; i++) {
+      // Création de la lettre codée sous 8 bits
+      if(letterCursor <= 7) {
+          letter[letterCursor] = data[0][8 + i];
+          letterCursor++;
+      } else {
+          // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
+          binary[cursor] = letter;
+          letterCursor = 0;
+          letter = new Array(8);
+          letter[0] = data[0][8 + i];
+          letterCursor++;
+          cursor++;
+      }
+  }
+  // Conversion du tableau binaire en caractères ASCII
+  let result = "";
+  for(i = 0; i < 2; i++) {
+      result += String.fromCharCode(parseInt(binary[i].join(''), 2));
+  }
+  return result;
+}
+
+// Applique le masque sur tout le QR Code sauf le timing pattern et les marqueurs de position
+function mask() {
+  // Applique le masque sur la marge haute 
+  for(i = 0; i < 8; i++) {
+      for(j = 8; j < nbPixels - 8; j++) {
+          if(i != 6) {
+              if((i + j) % 2 == 0) {
+                  data[i][j] = + !data[i][j];
+              }
+          }
+      }
+  }
+  // Aplique le masque sr la marge gauche
+  for(i = 8; i < nbPixels - 8; i++) {
+      for(j = 0; j < 8; j++) {
+          if(j != 6) {
+              if((i + j) % 2 == 0) {
+                  data[i][j] = + !data[i][j];
+              }
+          }
+      }
+  }
+  // Applique le masque sur le contenu du QR Code
+  for(i = 0; i < nbPixels; i++) {
+      for(j = 0; j < nbPixels; j++) {
+          if(i > 7 && j > 7) {
+              // Si on est pas dans l'emplacement du marqueur d'alignement
+              if(!inAlignMarqu(i, j)) {
+                  if((i + j) % 2 == 0) {
+                      data[i][j] = + !data[i][j];
+                  }
+              }
+          }
+      }
+  }
+}
+
+// Retourne vrai si on est dans l'emplacement du marqueur d'alignement
+function inAlignMarqu(ligne, colonne) {
+  return ((ligne > 22 && ligne < 28) && (colonne > 22 && colonne < 28));
+}
+
+// Permet de supprimer les marges vides de 0
+function removeMargins(array) {
+  let i = 0;
+  for(i; i < array.length; i++) {
+    if(array[i][0] == 1) break;
+  }
+  if(i == array.length - 1) {
+    array.shift();
+  }
+  for(i = 0; i < array.length; i++) {
+    if(array[0][i] == 1) break;
+  }
+  for(i = 0; i < array.length; i++) {
+    array[i].shift();
+  }
+  for(i = 0; i < array.length; i++) {
+    if(array[array.length - 1][i] == 1) break;
+  }
+  for(i = 0; i < array.length; i++) {
+    array[i].pop();
+  }
+  for(i; i < array.length; i++) {
+    if(array[i][array.length - 1] == 1) break;
+  }
+  if(i == array.length - 1) {
+    array.pop();
+  }
 }
