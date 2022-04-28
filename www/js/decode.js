@@ -204,7 +204,7 @@ function extractInformation(qrRoi){
   let bits = new Array();
 
   cv.cvtColor(qrRoi, gryMat, cv.COLOR_RGB2GRAY, 0);
-  cv.threshold(gryMat, thresholdedImage, 100, 255, cv.THRESH_BINARY);
+  cv.adaptiveThreshold(gryMat, thresholdedImage, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 51, 0);
 
 
   for(let i = 0; i < thresholdedImage.cols; ++i){
