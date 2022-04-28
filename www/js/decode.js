@@ -30,6 +30,8 @@ let thresholdedImage = null;
 
 let dstC1 = null;
 
+let verticesSuperPixels = null;
+
 function initVideo(){
   if (streaming) return;
   navigator.mediaDevices.getUserMedia({ video: {
@@ -77,9 +79,17 @@ function processVideo(){
 }
 
 
-
-function findTimingPattern(src){
-
+function getAlignmentCoordinates(version) {
+  if (version === 1) {
+    return [];
+  }
+  const intervals = Math.floor(version / 7) + 1;
+  const distance = 4 * version + 4; // between first and last alignment pattern
+  const step = Math.ceil(distance / intervals / 2) * 2; // To get the next even number
+  return [6].concat(Array.from(
+    { length: intervals },
+    (_, index) => distance + 6 - (intervals - 1 - index) * step)
+  );
 }
 
 /**
@@ -107,6 +117,9 @@ function findQRCode(src){
   cv.Canny(blurredGaussMat, edgedMat, 100,200);
 
   cv.findContours(edgedMat, contourMat, hierarchie, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE);
+  
+  cv.imshow("canvasResultTEST", hierarchie);
+
   let positionMarkers = findPositionMarkers(ApproxPositionMarkers());
   
   let qrPoint  = [];
@@ -123,7 +136,7 @@ function findQRCode(src){
     }
   }
 
-  if (qrPoint.length > 12) {
+  if (qrPoint.length > 12) { //test if 12points 
     let qrMat = new cv.Mat(qrPoint.length, 1, cv.CV_32SC2);
     for (let i = 0; i < qrPoint.length; ++i) {
         qrMat.intPtr(i, 0)[0] =  qrPoint[i].x;
@@ -141,20 +154,29 @@ function findQRCode(src){
     let qrx = qrRec.center.x - length / 2;
     let qry = qrRec.center.y - length / 2;
 
-    // if (0 < qrx && qrx + length < src.cols && 0 < qry && qry + length < src.rows) {
-    //     let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [qrVertices[0].x, qrVertices[0].y, qrVertices[1].x,
-    //                                                      qrVertices[1].y, qrVertices[2].x, qrVertices[2].y,
-    //                                                      qrVertices[3].x, qrVertices[3].y]);
-    //     let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [qrx, qry, qrx + length, qry, qrx + length,
-    //                                                      qry + length, qrx, qry + length]);
-    //     let M = cv.getPerspectiveTransform(srcTri, dstTri);
-    //     cv.warpPerspective(src, src, M, src.size());
-    //     M.delete(); srcTri.delete(); dstTri.delete();
-    //     let qrRoi = src.roi(new cv.Rect(qrx, qry, length, length));
-    //     cv.imshow("canvasOutput", qrRoi);
-    //     load();
-    //     qrRoi.delete();
-    // }
+    //point 0,0 le plus en haut à gauche 
+    if (0 < qrx && qrx + length < src.cols && 0 < qry && qry + length < src.rows) {
+      
+      let nbRotation = transformDetection(qrVertices, qrRec.center, qrPoint);
+      console.log("nbRotation => %c%d",'color: white; background-color: orange; padding: 2px 5px; border-radius: 2px', nbRotation);
+      //en haut à gauche , en haut à droite, en bas à droite, en bas à gauche 
+      let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [qrVertices[0].x, qrVertices[0].y, qrVertices[1].x,
+                                                         qrVertices[1].y, qrVertices[2].x, qrVertices[2].y,
+                                                         qrVertices[3].x, qrVertices[3].y]);
+
+      let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [qrx, qry, qrx + length, qry, qrx + length,
+                                                         qry + length, qrx, qry + length]);
+      
+      let clone = src.clone();
+      let M = cv.getPerspectiveTransform(srcTri, dstTri);
+        
+      cv.warpPerspective(clone, clone, M, clone.size());
+      M.delete(); srcTri.delete(); dstTri.delete();
+      let qrRoi = clone.roi(new cv.Rect(qrx, qry, length, length));
+      cv.imshow("canvasResult", qrRoi);
+      qrRoi.delete();
+      clone.delete();
+    }
     qrMat.delete();
   }
 
@@ -166,6 +188,71 @@ function findQRCode(src){
 
   return src;
 }
+
+
+function transformDetection(array, center, qrPoints){
+  let transformed = new Array(4);
+
+  let transformedCoords = new Array(4);
+  transformed[0] = false; transformed[1] = false; transformed[2] = true; transformed[3] = false;
+  
+  for (let i = 0; i < array.length; ++i) {
+    if(array[i].x - center.x < 0 && array[i].y - center.y < 0){ //Top Left
+      transformedCoords[0] = array[i];
+    }else if(array[i].x - center.x < 0 && array[i].y - center.y >= 0){ // Top Right
+      transformedCoords[1] = array[i];
+    }else if(array[i].x - center.x >=0 && array[i].y - center.y >= 0){ // Bottom Left
+      transformedCoords[2] = array[i];
+    }else if(array[i].x - center.x >= 0 && array[i].y - center.y < 0){ // Bottom Right
+      transformedCoords[3] = array[i];
+    }
+  }
+
+  console.log(transformedCoords);
+  console.log(array);
+
+    for(let i = 0; i < qrPoints.length; i+=4){
+      //Top Left
+        transformed[0] = (qrPoints[i].x - center.x < 0 && qrPoints[i+0].y - center.y < 0)
+          && (qrPoints[i+1].x - center.x < 0 && qrPoints[i+1].y - center.y < 0)
+          && (qrPoints[i+2].x - center.x < 0 && qrPoints[i+2].y - center.y < 0)
+          && (qrPoints[i+3].x - center.x < 0 && qrPoints[i+3].y - center.y < 0);
+        
+      // Top Right
+      transformed[1] = (qrPoints[i].x - center.x < 0 && qrPoints[i].y - center.y >= 0)
+        && (qrPoints[i+1].x - center.x < 0 && qrPoints[i+1].y - center.y >= 0)
+        && (qrPoints[i+2].x - center.x < 0 && qrPoints[i+2].y - center.y >= 0)
+        && (qrPoints[i+3].x - center.x < 0 && qrPoints[i+3].y - center.y >= 0);
+  
+      // Bottom RIght
+      transformed[2] = 
+        (qrPoints[i].x - center.x >=0 && qrPoints[i].y - center.y >= 0)
+        && (qrPoints[i+1].x - center.x >= 0 && qrPoints[i+1].y - center.y >= 0)
+        && (qrPoints[i+2].x - center.x >= 0 && qrPoints[i+2].y - center.y >= 0)
+        && (qrPoints[i+3].x - center.x >= 0 && qrPoints[i+3].y - center.y >= 0);
+  
+      // Bottom Leftlet ary = transformDetection(qrVertices, qrRec.center, qrPoints);
+  
+      transformed[3] = (qrPoints[i].x - center.x >= 0 && qrPoints[i].y - center.y < 0)
+        && (qrPoints[i+1].x - center.x >= 0 && qrPoints[i+1].y - center.y < 0)
+        && (qrPoints[i+2].x - center.x >= 0 && qrPoints[i+2].y - center.y < 0)
+        && (qrPoints[i+3].x - center.x >= 0 && qrPoints[i+3].y - center.y < 0);
+      
+    }
+    
+    let nbRotation = 0;
+    if(!transformed[3]){
+      nbRotation = 3;
+    }else if(!transformed[0]){
+      nbRotation = 2;
+    }else if(!transformed[1]){
+      nbRotation = 1;
+    }
+
+    console.log(transformed);
+  return nbRotation;
+}
+
 function isQrCode(verticeA, verticeB) {
   let distanceMinA = Number.MAX_VALUE;
   let distanceMinB = Number.MAX_VALUE;
@@ -221,82 +308,104 @@ function calculateNewCoord(t1, t2, isY){
 }
 
 
-function correctTimingPattern(Pa,Pb){
-  if (Math.abs((Pa.y - Pb.y) / (Pa.x - Pb.x)) < 1.3 && Math.abs((Pa.y - Pb.y) / (Pa.x - Pb.x)) > 0.76)
-    return false
-
-  let linePix = [];
-  let lenx = Math.abs(Pa.x - Pb.x) +1;
-  let leny = Math.abs(Pa.y - Pb.y) +1;
-  let len = lenx > leny ? lenx : leny;
-  let x = 0;
-  let y = 0;
-  for (let i = 0; i < len; ++i) {
-    x = Pa.x + Math.round((Pb.x - Pa.x) / (len - 1) * i);
-    y = Pa.y + Math.round((Pb.y - Pa.y) / (len - 1) * i);
-    let pix = thresholdedImage.ucharPtr(y, x)[0];
-    linePix.push(pix);
-  }
-
-  if (linePix.length < 10)
+function correctTimingPattern(point_a,point_b){
+  if (isDiagonal(point_a, point_b)) //if diagonal
     return false;
 
-  // Remove head and tail pixels
-  let tmp = linePix[0];
-  let lineLen = linePix.length
-  for (let i = 0; i < lineLen; ++i) {
-    if (linePix[i] !== tmp) {
-        linePix.splice(0, i);
+  let timingLine = getTimingLine(point_a, point_b);
+
+  if (timingLine.length < 10)
+    return false;
+
+
+  let tmp = timingLine[0];
+  let size = timingLine.length
+  for (let i = 0; i < size; ++i) {
+    if (timingLine[i] !== tmp) {
+        timingLine.splice(0, i);
         break;
     }
-    if (i === lineLen-1)
+    if (i === size-1)
         return false;
   }
 
-  tmp = linePix[linePix.length-1];
-  lineLen = linePix.length;
-  for (let i = 0; i < lineLen; ++i) {
-    if (linePix[lineLen - i] !== tmp) {
-        linePix.splice(lineLen - i + 1, i);
+  tmp = timingLine[timingLine.length-1];
+  size = timingLine.length;
+  for (let i = 0; i < size; ++i) {
+    if (timingLine[size - i] !== tmp) {
+        timingLine.splice(size - i + 1, i);
         break;
     }
   }
 
-  if (linePix.length < 10)
+  if (timingLine.length < 10)
     return false;
 
-  // Count the number of same pixels
-  let countArray = [];
-  let count = 1;
-  tmp = linePix[0];
-  for (let i = 0; i < lineLen; ++i) {
-    if (linePix[i] == tmp)
-        ++count;
-    else {
-        countArray.push(count);
-        count = 1;
-        tmp = linePix[i];
-    }
-  }
-  countArray.push(count);
+  let countArray = countPixels(timingLine, size);
+
   if (countArray.length < 5) {
     return false;
+  }
+
+  let arr = getVariance(countArray);
+
+  return arr[0] < arr[1];
 }
 
-// Get variance
-let varMin = 5;
-let sum = 0;
-let mean = 0;
-let variance = 0;
-for (let i = 0; i < countArray.length; ++i)
-  sum += countArray[i];
-mean = sum / countArray.length;
-for (let i = 0; i < countArray.length; ++i)
-  variance += Math.pow((countArray[i] - mean), 2);
-variance = Math.sqrt(variance);
-return variance < varMin;
+function getTimingLine(a, b){
+  let arr = new Array();
+  let sizeX = Math.abs(a.x - b.x) +1;
+  let sizeY = Math.abs(a.y - b.y) +1;
+  let len = sizeX > sizeY ? sizeX : sizeY;
+  let x = 0;
+  let y = 0;
+  for (let i = 0; i < len; ++i) {
+    x = a.x + Math.round((b.x - a.x) / (len - 1) * i);
+    y = a.y + Math.round((b.y - a.y) / (len - 1) * i);
+    let pix = thresholdedImage.ucharPtr(y, x)[0];
+    arr.push(pix);
+  }
+
+  return arr;
 }
 
+
+function getVariance(array){
+  let varMin = 5;
+  let acc = 0;
+  let moyenne = 0;
+  let variance = 0;
+
+  for (let i = 0; i < array.length; ++i)
+    acc += array[i];
+
+  moyenne = acc / array.length;
+
+  for (let i = 0; i < array.length; ++i)
+    variance += Math.pow((array[i] - moyenne), 2);
+
+  variance = Math.sqrt(variance);
+
+  return new Array(variance, varMin);
+}
+
+
+function countPixels(timingLine,  len){
+  let array = [];
+  let count = 1;
+  let tmp = timingLine[0];
+  for (let i = 0; i < len; ++i) {
+    if (timingLine[i] == tmp)
+        ++count;
+    else {
+        array.push(count);
+        count = 1;
+        tmp = timingLine[i];
+    }
+  }
+  array.push(count);
+  return array;
+}
 
 function findPositionMarkers(approx){
   let superPixels  = [];
@@ -306,7 +415,7 @@ function findPositionMarkers(approx){
       if(isCorrectSquare(ratio)) {
         let vertices = cv.RotatedRect.points(rotatedRect);
         superPixels.push(vertices);
-        //drawPositionMarkers(vertices);
+        drawPositionMarkers(vertices);
       }
   }
   return superPixels;
@@ -355,14 +464,20 @@ function getDistanceBetweenPoints(p1, p2){
   return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
 }
 
+function isDiagonal(a,b){
+  return Math.abs((a.y - b.y) / (a.x - b.x)) < 1.3 && Math.abs((a.y - b.y) / (a.x - b.x)) > 0.76;
+}
 function isCorrectSquare(ratio){
   return ratio > 0.75 && ratio < 1.45;
 }
 
 //drawing methods 
 function drawPositionMarkers(vertices){
-  for (let j = 0; j < 4; j++)
+  for (let j = 0; j < 4; j++){
     cv.line(src, vertices[j], vertices[(j + 1) % 4], [0, 255, 0, 255], 1, cv.LINE_AA, 0);
+    //console.log(vertices[j], vertices[(j + 1) % 4]);
+  }
+   
 }
 
 function drawLinesPattern(points){
