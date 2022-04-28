@@ -4,7 +4,7 @@ document.addEventListener("deviceready", () => {
     let permissions = cordova.plugins.permissions
 
     permissions.requestPermission(permissions.CAMERA, success, error);
-
+    // permissions.requestPermission(permissions.WRITE_EXTERNAL_STORAGE, success, error);
 }, false);
 
 // Gestion du bouton encode

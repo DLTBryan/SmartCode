@@ -3,32 +3,15 @@ document.getElementById("retour").addEventListener("click", () => {
     window.location.href = "./encode.html";
 });
 
+// Gestion du partage du QR Code
 document.getElementById("download").addEventListener("click", () => {
-    var canvas, imageDataUrl, imageData;
-    var img = new Image();
-    img.onload = function() {
-        canvas = document.getElementById("canvas");
-        try {
-            imageDataUrl = canvas.toDataURL('image/jpeg', 1.0);
-            imageData = imageDataUrl.replace(/data:image\/jpeg;base64,/, '');
-            cordova.exec(
-                success,
-                error,
-                'Canvas2ImagePlugin',
-                'saveImageDataToLibrary',
-                [imageData]
-            );
-        }
-        catch(e) {
-            error(e.message);
-        }
+    var options = {
+        message: 'Voici mon SmartQRCode :',
+        subject: 'QRCode',
+        files: [document.getElementById("canvas").toDataURL()],
+        chooserTitle: 'Choisir une application',
     };
-    try {
-        img.src = url;
-    }
-    catch(e) {
-        error(e.message);
-    }
+    window.plugins.socialsharing.shareWithOptions(options);
 });
 
 // Nombre de pixels (écrit en dur mais modulable)
@@ -92,6 +75,9 @@ function generateQRCode() {
     createMarqueur(nbPixels - 7, 0);
     createMarqueur(0, nbPixels - 7);
 
+    // Création du marqueur d'alignement
+    createMarquAlign(nbPixels - 9, nbPixels - 9);
+
     // Ajout du type du QR Code (2 caractères maximum)
     addType(type);
 
@@ -104,6 +90,38 @@ function generateQRCode() {
     // Fonction pour décoder le QR Code (à utiliser dans decode.html);
     let result = decode();
     console.log(result);
+}
+
+function createMarquAlign(ligne, colonne) {
+    // Création du marqueur d'alignement
+    // Création du fond blanc
+    for(i = 0; i < 5; i++) {
+        for(j = 0; j < 5; j++) {
+            data[ligne + i][colonne + j] = 0;
+        }
+    }
+    // Première ligne
+    for(i = 0; i < 5; i++) {
+        data[ligne][colonne + i] = 1;
+    }
+    // Deuxième ligne
+    ligne++;
+    data[ligne][colonne] = 1;
+    data[ligne][colonne + 4] = 1;
+    // Troisième ligne
+    ligne++;
+    data[ligne][colonne] = 1;
+    data[ligne][colonne + 2] = 1;
+    data[ligne][colonne + 4] = 1;
+    // Quatrième ligne
+    ligne++;
+    data[ligne][colonne] = 1;
+    data[ligne][colonne + 4] = 1;
+    // Dernière ligne
+    ligne++;
+    for(i = 0; i < 5; i++) {
+        data[ligne][colonne + i] = 1;
+    }
 }
 
 function createMarqueur(ligne, colonne) {
@@ -218,20 +236,23 @@ function encode(input) {
     let EXTCursor = 0;
     for(j = nbPixels - 1; j > 7; j--) {
         for(i = nbPixels - 1; i > 7; i--) {
-            // Si le curseur n'est pas arrivé à la fin du mot
-            if(binary.length > cursor) {
-                data[i][j] = + binary[cursor];
-            } else {
-                // Si le curseur n'est pas arrivé à la fin du mot + le caractère EXT
-                if(binary.length + 8 > cursor) {
-                    // On ajoute le caractère EXT
-                    data[i][j] = + EXT[EXTCursor];
-                    EXTCursor++;
+            // Si on est pas dans l'emplacement du marqueur d'alignement
+            if(!inAlignMarqu(i, j)) {
+                // Si le curseur n'est pas arrivé à la fin du mot
+                if(binary.length > cursor) {
+                    data[i][j] = + binary[cursor];
                 } else {
-                    break;
+                    // Si le curseur n'est pas arrivé à la fin du mot + le caractère EXT
+                    if(binary.length + 8 > cursor) {
+                        // On ajoute le caractère EXT
+                        data[i][j] = + EXT[EXTCursor];
+                        EXTCursor++;
+                    } else {
+                        break;
+                    }
                 }
+                cursor++;
             }
-            cursor++;
         }
     }
     // Application du masque lors de l'encodage
@@ -247,6 +268,7 @@ function decode() {
     if(getType() != type) {
         return "Mauvais type de QR Code";
     }
+
     // Le tableau de mots binaires
     let binary = new Array();
     // La lettre en binaire
@@ -257,22 +279,25 @@ function decode() {
     let letterCursor = 0;
     for(j = nbPixels - 1; j > 7; j--) {
         for(i = nbPixels - 1; i > 7; i--) {
-            // Création de la lettre codée sous 8 bits
-            if(letterCursor <= 7) {
-                letter[letterCursor] = data[i][j];
-                letterCursor++;
-            } else {
-                // Si la lettre est le caractère EXT, on arrête de décoder
-                if(equals(letter, EXT)) {
-                    break;
+            // Si on est pas dans l'emplacement du marqueur d'alignement
+            if(!inAlignMarqu(i, j)) {
+                // Création de la lettre codée sous 8 bits
+                if(letterCursor <= 7) {
+                    letter[letterCursor] = data[i][j];
+                    letterCursor++;
+                } else {
+                    // Si la lettre est le caractère EXT, on arrête de décoder
+                    if(equals(letter, EXT)) {
+                        break;
+                    }
+                    // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
+                    binary[cursor] = letter;
+                    letterCursor = 0;
+                    letter = new Array(8);
+                    letter[0] = data[i][j];
+                    letterCursor++;
+                    cursor++;
                 }
-                // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
-                binary[cursor] = letter;
-                letterCursor = 0;
-                letter = new Array(8);
-                letter[0] = data[i][j];
-                letterCursor++;
-                cursor++;
             }
         }
     }
@@ -342,10 +367,18 @@ function mask() {
     for(i = 0; i < nbPixels; i++) {
         for(j = 0; j < nbPixels; j++) {
             if(i > 7 && j > 7) {
-                if((i + j) % 2 == 0) {
-                    data[i][j] = + !data[i][j];
+                // Si on est pas dans l'emplacement du marqueur d'alignement
+                if(!inAlignMarqu(i, j)) {
+                    if((i + j) % 2 == 0) {
+                        data[i][j] = + !data[i][j];
+                    }
                 }
             }
         }
     }
+}
+
+// Retourne vrai si on est dans l'emplacement du marqueur d'alignement
+function inAlignMarqu(ligne, colonne) {
+    return ((ligne > 22 && ligne < 28) && (colonne > 22 && colonne < 28));
 }

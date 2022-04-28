@@ -98,6 +98,7 @@ h1 {
 .contenu {
     display: flex;
     flex-direction: column;
+    width: 90vw;
 }
 
 .btn-primary, .btn-primary:hover, .btn-primary:active, .btn-primary:visited {
