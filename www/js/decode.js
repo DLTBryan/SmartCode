@@ -148,15 +148,16 @@ function findQRCode(src){
 
     //drawMarker(qrVertices);
 
-    let length = (qrWidth + qrHeight) / 2;
+    //let length = (qrWidth + qrHeight) / 2;
+    let length = 32;
     let qrx = qrRec.center.x - length / 2;
     let qry = qrRec.center.y - length / 2;
 
     //point 0,0 le plus en haut à gauche 
     if (0 < qrx && qrx + length < src.cols && 0 < qry && qry + length < src.rows) {
       
-      let nbRotation = transformDetection(qrVertices, qrRec.center, qrPoint);
-      console.log("nbRotation => %c%d",'color: white; background-color: orange; padding: 2px 5px; border-radius: 2px', nbRotation);
+      //let nbRotation = transformDetection(qrVertices, qrRec.center, qrPoint);
+      //console.log("nbRotation => %c%d",'color: white; background-color: orange; padding: 2px 5px; border-radius: 2px', nbRotation);
       //en haut à gauche , en haut à droite, en bas à droite, en bas à gauche 
       let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [qrVertices[0].x, qrVertices[0].y, qrVertices[1].x,
                                                          qrVertices[1].y, qrVertices[2].x, qrVertices[2].y,
@@ -211,9 +212,7 @@ function extractInformation(qrRoi){
     bits.push(tmp);
   }
 
-  console.log(bits.length);
   return bits;
-
 }
 
 function transformDetection(array, center, qrPoints){
@@ -541,12 +540,3 @@ function captureCode(){
 function initOpenCV(){
   initVideo();
 }
-
-
-// function threshImage(src){
-//   let mat = new cv.Mat(height, width, cv.CV_8U);
-//   cv.cvtColor(src, mat, cv.COLOR_BGR2GRAY);
-//   cv.adaptiveThreshold(mat, dstC1, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 51, 0);
-//   mat.delete();
-//   return dstC1;
-// }
