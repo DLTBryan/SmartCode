@@ -12,7 +12,7 @@ document.addEventListener("deviceready", () => {
 }, false);
 
 let width = 320;
-let height = 240;
+let height = 0;
 let video = document.getElementById("video"); //video in html
 
 let streaming = false;
@@ -49,8 +49,8 @@ function initVideo(){
   video.addEventListener("canplay", function(ev){
     if (!streaming) {
       height = video.videoHeight / (video.videoWidth/width);
-       video.setAttribute("width", width);
-       video.setAttribute("height", height);
+      video.setAttribute("width", width);
+      video.setAttribute("height", height);
       streaming = true;
       
       videoCap = new cv.VideoCapture(video);
@@ -148,8 +148,8 @@ function findQRCode(src){
 
     //drawMarker(qrVertices);
 
-    //let length = (qrWidth + qrHeight) / 2;
-    let length = 32;
+    let length = (qrWidth + qrHeight) / 2;
+    //let length = 32;
     let qrx = qrRec.center.x - length / 2;
     let qry = qrRec.center.y - length / 2;
 
@@ -206,20 +206,38 @@ function extractInformation(qrRoi){
   cv.cvtColor(qrRoi, gryMat, cv.COLOR_RGB2GRAY, 0);
   cv.adaptiveThreshold(gryMat, thresholdedImage, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 51, 0);
 
+  let largeurSuperPIxel = (qrRoi.cols+qrRoi.rows)/2;
+  let largeurPixel = largeurSuperPIxel/32;
 
-  for(let i = 0; i < thresholdedImage.cols; ++i){
+  // for(let i = 0; i < thresholdedImage.cols; ++i){
+  //   let tmp = new Array();
+  //   for(let j = 0; j < thresholdedImage.rows; ++j){
+  //     let p = thresholdedImage.ucharPtr(i, j)[0];
+  //     if(p === 255){
+  //       tmp.push(0);
+  //     }else{
+  //       tmp.push(1);
+  //     }
+  //   }
+  //   bits.push(tmp);
+  // }
+
+
+  let c = largeurPixel/2;
+  for(let i = 0; i < 32; ++i){
     let tmp = new Array();
-    for(let j = 0; j < thresholdedImage.rows; ++j){
-      let p = thresholdedImage.ucharPtr(i, j)[0];
+    for(let j = 0; j < 32; ++j){
+      let p = thresholdedImage.ucharPtr(c + i*largeurPixel
+        , 
+        c +j*largeurPixel)[0];
       if(p === 255){
         tmp.push(0);
-      }else{
+      }else if(p === 0){
         tmp.push(1);
       }
     }
     bits.push(tmp);
   }
-
   return bits;
 }
 
