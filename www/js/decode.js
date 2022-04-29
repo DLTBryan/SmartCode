@@ -176,9 +176,21 @@ function findQRCode(src){
       let array = extractInformation(qrRoi);
       //cv.imshow("canvasResult", qrRoi);
       cv.imshow("canvasResult", thresholdedImage);
-      console.log(array);
+      let valide = false;
+      if(isAligned(array)) {
+        let i = 0;
+        while(getType(array) != "SD" && i < 3) {
+          cv.rotate(qrRoi, qrRoi, cv.ROTATE_90_CLOCKWISE)
+          array = extractInformation(qrRoi);
+          i++;
+        }
+        valide = (i < 3);
+      };
+      if(valide) {
+        console.log(array);
+      }
+
       // array = removeMargins(array);
-      console.log(array);
       // let result, output = decode(array);
       // if(result) {
       //   console.log(output);
@@ -204,7 +216,7 @@ function extractInformation(qrRoi){
   let bits = new Array();
 
   cv.cvtColor(qrRoi, gryMat, cv.COLOR_RGB2GRAY, 0);
-  cv.adaptiveThreshold(gryMat, thresholdedImage, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 51, 0);
+  cv.threshold(gryMat, thresholdedImage, 100, 255, cv.THRESH_BINARY);
 
   let largeurSuperPIxel = (qrRoi.cols+qrRoi.rows)/2;
   let largeurPixel = largeurSuperPIxel/32;
@@ -655,7 +667,7 @@ function decode(data) {
   return true, result;
 }
 
-function getType() {
+function getType(array) {
   // Le tableau de mots binaires
   let binary = new Array(2);
   // La lettre en binaire
@@ -667,14 +679,14 @@ function getType() {
   for(i = 0; i <= 16; i++) {
       // Création de la lettre codée sous 8 bits
       if(letterCursor <= 7) {
-          letter[letterCursor] = data[0][8 + i];
+          letter[letterCursor] = array[0][8 + i];
           letterCursor++;
       } else {
           // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
           binary[cursor] = letter;
           letterCursor = 0;
           letter = new Array(8);
-          letter[0] = data[0][8 + i];
+          letter[0] = array[0][8 + i];
           letterCursor++;
           cursor++;
       }
@@ -756,4 +768,43 @@ function removeMargins(array) {
   if(i == array.length - 1) {
     array.pop();
   }
+}
+
+function isAligned(array) {
+  let nbErrors = 0;
+  let template = [
+    [1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 1, 1, 1, 0, 1],
+    [1, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1],
+    
+  ];
+  // Coin haut gauche
+  let tmp = new Array(7);
+  for(i = 0; i < 7; i++) {
+    tmp[i] = array[i].slice(0, 7);
+  }
+  if(!equals(template, tmp)) nbErrors++;
+  // Coin bas gauche
+  tmp = new Array(7);
+  for(i = 0; i < 7; i++) {
+    tmp[i] = array[(array.length - 7) + i].slice(0, 7);
+  }
+  if(!equals(template, tmp)) nbErrors++;
+  // Coin haut droit
+  tmp = new Array(7);
+  for(i = 0; i < 7; i++) {
+    tmp[i] = array[i].slice(-7);
+  }
+  if(!equals(template, tmp)) nbErrors++;
+  // Coin bas droit
+  tmp = new Array(7);
+  for(i = 0; i < 7; i++) {
+    tmp[i] = array[(array.length - 7) + i].slice(-7);
+  }
+  if(!equals(template, tmp)) nbErrors++;
+  return nbErrors <= 1;
 }
