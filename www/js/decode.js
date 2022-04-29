@@ -177,17 +177,21 @@ function findQRCode(src){
       //cv.imshow("canvasResult", qrRoi);
       cv.imshow("canvasResult", thresholdedImage);
       let valide = false;
+      array = mask(array);
       if(isAligned(array)) {
         let i = 0;
         while(getType(array) != "SD" && i < 3) {
           cv.rotate(qrRoi, qrRoi, cv.ROTATE_90_CLOCKWISE)
-          array = extractInformation(qrRoi);
+          array = mask(extractInformation(qrRoi));
           i++;
         }
         valide = (i < 3);
       };
       if(valide) {
-        console.log(array);
+        let result = decode(array);
+        alert(result);
+        window.localStorage.setItem("output", result);
+        window.location.href = "./result.html";
       }
 
       // array = removeMargins(array);
@@ -446,7 +450,7 @@ function getTimingLine(a, b){
 
 
 function getVariance(array){
-  let varMin = 5;
+  let varMin = 30;
   let acc = 0;
   let moyenne = 0;
   let variance = 0;
@@ -618,14 +622,8 @@ function ASCIItoBinary(input) {
 }
 
 // Décodage du QR Code
-function decode(data) {
+function decode(array) {
   // Application du masque pour décoder le QR Code
-  mask();
-
-  // Vérification du type du QR Code
-  if(getType() != type) {
-      return false, "Mauvais type de QR Code";
-  }
 
   // Le tableau de mots binaires
   let binary = new Array();
@@ -641,7 +639,7 @@ function decode(data) {
           if(!inAlignMarqu(i, j)) {
               // Création de la lettre codée sous 8 bits
               if(letterCursor <= 7) {
-                  letter[letterCursor] = data[i][j];
+                  letter[letterCursor] = array[i][j];
                   letterCursor++;
               } else {
                   // Si la lettre est le caractère EXT, on arrête de décoder
@@ -652,7 +650,7 @@ function decode(data) {
                   binary[cursor] = letter;
                   letterCursor = 0;
                   letter = new Array(8);
-                  letter[0] = data[i][j];
+                  letter[0] = array[i][j];
                   letterCursor++;
                   cursor++;
               }
@@ -664,7 +662,7 @@ function decode(data) {
   for(i = 0; i < binary.length; i++) {
       result += String.fromCharCode(parseInt(binary[i].join(''), 2));
   }
-  return true, result;
+  return result;
 }
 
 function getType(array) {
@@ -700,13 +698,13 @@ function getType(array) {
 }
 
 // Applique le masque sur tout le QR Code sauf le timing pattern et les marqueurs de position
-function mask() {
+function mask(array) {
   // Applique le masque sur la marge haute 
   for(i = 0; i < 8; i++) {
       for(j = 8; j < nbPixels - 8; j++) {
           if(i != 6) {
               if((i + j) % 2 == 0) {
-                  data[i][j] = + !data[i][j];
+                array[i][j] = + !array[i][j];
               }
           }
       }
@@ -716,7 +714,7 @@ function mask() {
       for(j = 0; j < 8; j++) {
           if(j != 6) {
               if((i + j) % 2 == 0) {
-                  data[i][j] = + !data[i][j];
+                array[i][j] = + !array[i][j];
               }
           }
       }
@@ -728,12 +726,13 @@ function mask() {
               // Si on est pas dans l'emplacement du marqueur d'alignement
               if(!inAlignMarqu(i, j)) {
                   if((i + j) % 2 == 0) {
-                      data[i][j] = + !data[i][j];
+                    array[i][j] = + !array[i][j];
                   }
               }
           }
       }
   }
+  return array;
 }
 
 // Retourne vrai si on est dans l'emplacement du marqueur d'alignement

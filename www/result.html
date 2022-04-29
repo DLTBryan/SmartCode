@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <!-- 
-    Page de décodage de l'application
+    Page de résultat de l'application
  -->
 
 <head>
@@ -17,27 +17,23 @@
 
 <body>
     <div class="p-0 mb-1">
-        <img src="img/decode.png" alt="..." class="img-thumbnail rounded mx-auto d-block">
+        <img src="img/encode.png" alt="..." class="img-thumbnail rounded mx-auto d-block">
     </div>
-    <div class="d-flex justify-content-center m-1 text-center">
-        <video id="video" style="display: none;"></video>
-        <canvas class="center-block" id="canvasOutput"></canvas>
-        </br>       
+    <div class="container contenu text-center">
+        <div class="mt-2 mb-2">
+            <div class="input-group mb-1" id="output"></div>
+        </div>
+        </br>
     </div>
-    <span class="center-block" id="output"></span>
-    <canvas class="center-block" id="canvasResult" width="300" height="300"></canvas>
-    <!-- <canvas class="center-block" id="canvasResultTEST" width="300" height="300"></canvas> -->
     <div class="index-buttons mb-5">
         <div class="col-md-12 text-center">
-            <button class="btn btn-primary btn-lg text-uppercase" id="capture" >Capture</button>
             <button class="btn btn-primary btn-lg text-uppercase" id="retour">Retour</button>
         </div>
     </div>
     <a class="text-capitalize text-center m-0 mb-1" id="copyright" href="https://www.uha.fr/" target="_blank"
         style="text-decoration: none;">© 2022 Université Haute-Alsace</a>
     <script src="cordova.js"></script>
-    <script src="js/decode.js"></script>
-    <script async src="js/opencv.js" type="text/javascript" onload="initOpenCV();"></script>
+    <script src="js/result.js"></script>
 </body>
 
 </html>
