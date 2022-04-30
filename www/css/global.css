@@ -150,7 +150,7 @@ h1 {
         url("fonts/TTF/THICCCBOI-Regular.ttf") format("ttf");
 }
 
-/* @media (width >= 1080px) {
+@media (width >= 1080px) {
     #canvasOutput{
         width: 40vw;
         height: 41vh;
@@ -164,5 +164,5 @@ h1 {
         height: 38vh;
         border: 1px solid black;
     }
-} */
+}
 

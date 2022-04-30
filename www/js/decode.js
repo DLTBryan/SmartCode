@@ -11,7 +11,8 @@ document.addEventListener("deviceready", () => {
     console.log(navigator.camera)
 }, false);
 
-let width = 320;
+//let width = 320;
+let width= document.getElementById("containerVideo").offsetWidth;
 let height = 0;
 let video = document.getElementById("video"); //video in html
 
@@ -32,6 +33,11 @@ let dstC1 = null;
 
 let verticesSuperPixels = null;
 
+let resizedCanvas = document.createElement('canvas');
+let resizedContext = resizedCanvas.getContext('2d');
+
+
+
 function initVideo(){
   if (streaming) return;
   navigator.mediaDevices.getUserMedia({ video: {
@@ -47,10 +53,19 @@ function initVideo(){
   });
 
   video.addEventListener("canplay", function(ev){
+    document.getElementById("containerVideo").setAttribute("width", video.videoWidth);
+    width = video.videoWidth;
     if (!streaming) {
+      
+      resizedCanvas.height = '300';
+      resizedCanvas.width = '300';
+      (document.getElementById("containerVideo")).appendChild(resizedCanvas);
+
       height = video.videoHeight / (video.videoWidth/width);
       video.setAttribute("width", width);
+      
       video.setAttribute("height", height);
+      
       streaming = true;
       
       videoCap = new cv.VideoCapture(video);
@@ -73,7 +88,12 @@ function startVideoProcessing(){
 
 function processVideo(){
   videoCap.read(src);
+
   cv.imshow("canvasOutput", findQRCode(src));
+
+  let canvas = document.getElementById("canvasOutput");
+  
+  resizedContext.drawImage(canvas, 0, 0, 300, 300);
 
   requestAnimationFrame(processVideo);
 }
@@ -427,7 +447,7 @@ function correctTimingPattern(point_a,point_b){
   }
 
   let arr = getVariance(countArray);
-
+  console.log(arr[0]);
   return arr[0] < arr[1];
 }
 
@@ -450,7 +470,8 @@ function getTimingLine(a, b){
 
 
 function getVariance(array){
-  let varMin = 30;
+  /** if value are smaller less recognition available and vice versa  */
+  let varMin = 40;
   let acc = 0;
   let moyenne = 0;
   let variance = 0;
