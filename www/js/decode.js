@@ -3,10 +3,6 @@ document.getElementById("retour").addEventListener("click", () => {
 	window.location.href = "./index.html";
 });
 
-document.getElementById("capture").addEventListener("click", () => {
-	console.log("Click");
-});
-
 document.addEventListener("deviceready", () => {
 	console.log(navigator.camera)
 }, false);
@@ -214,11 +210,12 @@ function findQRCode(src) {
 
 			let array = extractInformation(qrRoi);
 			//cv.imshow("canvasResult", qrRoi);
-			cv.imshow("canvasResult", thresholdedImage);
+			// cv.imshow("canvasResult", thresholdedImage);
 			array = mask(array);
 			if (isAligned(array) && getKey(array) == key && getStart(array)) {
 				let result = decode(array);
 				window.localStorage.setItem("output", result);
+				window.localStorage.setItem("data-output", JSON.stringify(mask(array)));
 				window.location.href = "./result.html";
 			}
 			qrRoi.delete();
