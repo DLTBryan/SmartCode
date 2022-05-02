@@ -21,6 +21,8 @@ var sizePixel = 5;
 
 // Caractère ASCII de fin de mot
 let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
+
+let START = [0, 0, 1, 0, 1, 0, 1, 0];
 // Fonction pour comparer 2 arrays (utilisé pour détecter la fin du texte)
 const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -234,24 +236,31 @@ function encode(input) {
     let cursor = 0;
     // Curseur pour le caractère EXT
     let EXTCursor = 0;
+    // Curseur pour le caractère *
+    let STARTCursor = 0;
     for(j = nbPixels - 1; j > 7; j--) {
         for(i = nbPixels - 1; i > 7; i--) {
             // Si on est pas dans l'emplacement du marqueur d'alignement
             if(!inAlignMarqu(i, j)) {
-                // Si le curseur n'est pas arrivé à la fin du mot
-                if(binary.length > cursor) {
-                    data[i][j] = + binary[cursor];
+                // Si le curseur n'est pas arrivé à la fin du caractère de début (*)
+                if(STARTCursor <= 7) {
+                    data[i][j] = + START[STARTCursor];
+                    STARTCursor++;
                 } else {
-                    // Si le curseur n'est pas arrivé à la fin du mot + le caractère EXT
-                    if(binary.length + 8 > cursor) {
-                        // On ajoute le caractère EXT
-                        data[i][j] = + EXT[EXTCursor];
-                        EXTCursor++;
+                    if(binary.length > cursor) {
+                        data[i][j] = + binary[cursor];
                     } else {
-                        break;
+                        // Si le curseur n'est pas arrivé à la fin du mot + le caractère EXT
+                        if(binary.length + 8 > cursor) {
+                            // On ajoute le caractère EXT
+                            data[i][j] = + EXT[EXTCursor];
+                            EXTCursor++;
+                        } else {
+                            break;
+                        }
                     }
+                    cursor++;
                 }
-                cursor++;
             }
         }
     }
@@ -279,8 +288,8 @@ function decode() {
     let letterCursor = 0;
     for(j = nbPixels - 1; j > 7; j--) {
         for(i = nbPixels - 1; i > 7; i--) {
-            // Si on est pas dans l'emplacement du marqueur d'alignement
-            if(!inAlignMarqu(i, j)) {
+            // Si on est pas dans l'emplacement du marqueur d'alignement ni dans le caractère de début
+            if(!inAlignMarqu(i, j) && !inSTART(i, j)) {
                 // Création de la lettre codée sous 8 bits
                 if(letterCursor <= 7) {
                     letter[letterCursor] = data[i][j];
@@ -381,4 +390,8 @@ function mask() {
 // Retourne vrai si on est dans l'emplacement du marqueur d'alignement
 function inAlignMarqu(ligne, colonne) {
     return ((ligne > 22 && ligne < 28) && (colonne > 22 && colonne < 28));
+}
+
+function inSTART(ligne, colonne) {
+    return ((ligne > nbPixels - 9 && colonne == nbPixels - 1));
 }

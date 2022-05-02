@@ -196,32 +196,12 @@ function findQRCode(src){
       let array = extractInformation(qrRoi);
       //cv.imshow("canvasResult", qrRoi);
       cv.imshow("canvasResult", thresholdedImage);
-      let valide = false;
       array = mask(array);
-      if(isAligned(array)) {
-        let i = 0;
-        while(getType(array) != "SD" && i < 3) {
-          cv.rotate(qrRoi, qrRoi, cv.ROTATE_90_CLOCKWISE)
-          array = mask(extractInformation(qrRoi));
-          i++;
-        }
-        valide = (i < 3);
-      };
-      if(valide) {
+      if(isAligned(array) && getType(array) == "SD" && getStart(array)) {
         let result = decode(array);
-        console.log(array);
-        alert(result);
-        // window.localStorage.setItem("output", result);
-        // window.location.href = "./result.html";
+        window.localStorage.setItem("output", result);
+        window.location.href = "./result.html";
       }
-
-      // array = removeMargins(array);
-      // let result, output = decode(array);
-      // if(result) {
-      //   console.log(output);
-      // } else {
-      //   console.log("erreur");
-      // }
       qrRoi.delete();
       clone.delete();
     }
@@ -613,6 +593,8 @@ var sizePixel = 5;
 
 // Caractère ASCII de fin de mot
 let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
+// Caractère ASCII de début de mot (*)
+let START = [0, 0, 1, 0, 1, 0, 1, 0];
 // Fonction pour comparer 2 arrays (utilisé pour détecter la fin du texte)
 const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -656,8 +638,8 @@ function decode(array) {
   let letterCursor = 0;
   for(j = nbPixels - 1; j > 7; j--) {
       for(i = nbPixels - 1; i > 7; i--) {
-          // Si on est pas dans l'emplacement du marqueur d'alignement
-          if(!inAlignMarqu(i, j)) {
+          // Si on est pas dans l'emplacement du marqueur d'alignement ni dans le caractère de début
+          if(!inAlignMarqu(i, j) && !inSTART(i, j)) {
               // Création de la lettre codée sous 8 bits
               if(letterCursor <= 7) {
                   letter[letterCursor] = array[i][j];
@@ -718,6 +700,14 @@ function getType(array) {
   return result;
 }
 
+function getStart(array) {
+  let tmp = new Array(8);
+  for(i = 1; i < 9; i++) {
+    tmp[i-1] = array[nbPixels - i][nbPixels - 1];
+  }
+  return equals(tmp, START);
+}
+
 // Applique le masque sur tout le QR Code sauf le timing pattern et les marqueurs de position
 function mask(array) {
   // Applique le masque sur la marge haute 
@@ -759,6 +749,10 @@ function mask(array) {
 // Retourne vrai si on est dans l'emplacement du marqueur d'alignement
 function inAlignMarqu(ligne, colonne) {
   return ((ligne > 22 && ligne < 28) && (colonne > 22 && colonne < 28));
+}
+
+function inSTART(ligne, colonne) {
+  return ((ligne > nbPixels - 9 && colonne == nbPixels - 1));
 }
 
 // Permet de supprimer les marges vides de 0
