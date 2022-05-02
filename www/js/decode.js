@@ -209,9 +209,10 @@ function findQRCode(src){
       };
       if(valide) {
         let result = decode(array);
+        console.log(array);
         alert(result);
-        window.localStorage.setItem("output", result);
-        window.location.href = "./result.html";
+        // window.localStorage.setItem("output", result);
+        // window.location.href = "./result.html";
       }
 
       // array = removeMargins(array);
@@ -447,7 +448,6 @@ function correctTimingPattern(point_a,point_b){
   }
 
   let arr = getVariance(countArray);
-  console.log(arr[0]);
   return arr[0] < arr[1];
 }
 
@@ -800,8 +800,14 @@ function isAligned(array) {
     [1, 0, 1, 1, 1, 0, 1],
     [1, 0, 0, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1],
-    
   ];
+  let templateAlignMarqu = [
+    [1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 1],
+    [1, 0, 1, 0, 1],
+    [1, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1],
+  ]
   // Coin haut gauche
   let tmp = new Array(7);
   for(i = 0; i < 7; i++) {
@@ -826,5 +832,10 @@ function isAligned(array) {
     tmp[i] = array[(array.length - 7) + i].slice(-7);
   }
   if(!equals(template, tmp)) nbErrors++;
-  return nbErrors <= 1;
+  if(nbErrors > 1) return false;
+  tmp = new Array(5);
+  for(i = 0; i < 5; i++) {
+    tmp[i] = array[(array.length - 9) + i].slice(-9, -4);
+  }
+  return equals(tmp, templateAlignMarqu);
 }
