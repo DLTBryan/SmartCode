@@ -19,31 +19,31 @@ var nbPixels = 32;
 // Taille d'un pixel (écrit en dur mais modulable)
 var sizePixel = 5;
 
-// Caractère ASCII de fin de mot
+// Caractère ASCII de fin de mot (EXT)
 let EXT = [0, 0, 0, 0, 0, 0, 1, 1];
-
+// Caractère ASCII de début de mot (*)
 let START = [0, 0, 1, 0, 1, 0, 1, 0];
 // Fonction pour comparer 2 arrays (utilisé pour détecter la fin du texte)
 const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-
-var type = "SD";
+// Clé utilisée pour vérifier le type de QRCode
+var key = "SD";
 
 // Initialisation du tableau de données binaires
 var data = new Array(nbPixels);
-for(i = 0; i < nbPixels; i++) {
+for (i = 0; i < nbPixels; i++) {
     data[i] = new Array(nbPixels);
 }
 
 // Remplissage du QR Code avec de la donnée aléatoire
 var start = 0;
 var cursor = 0;
-for(i = 0; i < nbPixels; i++) {
-    for(j = 0; j < nbPixels; j++) {
+for (i = 0; i < nbPixels; i++) {
+    for (j = 0; j < nbPixels; j++) {
         // Si on est pas dans le timing pattern
-        if(i != 6 && j != 6) {
+        if (i != 6 && j != 6) {
             data[i][j] = Math.floor(Math.random() * Math.floor(2));;
         } else {
-            data[i][j] = + (cursor % 2 == 0);
+            data[i][j] = +(cursor % 2 == 0);
             cursor++;
         }
     }
@@ -72,38 +72,34 @@ function generateQRCode() {
     context.fillStyle = "white";
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Création des 3 marqueurs de positionnement
-    createMarqueur(0, 0);
-    createMarqueur(nbPixels - 7, 0);
-    createMarqueur(0, nbPixels - 7);
+    // Création des 3 marqueurs de position
+    createPositionMarker(0, 0);
+    createPositionMarker(nbPixels - 7, 0);
+    createPositionMarker(0, nbPixels - 7);
 
     // Création du marqueur d'alignement
-    createMarquAlign(nbPixels - 9, nbPixels - 9);
+    createAlignMarker(nbPixels - 9, nbPixels - 9);
 
     // Ajout du type du QR Code (2 caractères maximum)
-    addType(type);
+    addKey(key);
 
     // Encodage du QR Code avec l'entrée utilisateur
     encode(input);
 
     // Affichage du QR Code
     drawQRCode(context);
-
-    // Fonction pour décoder le QR Code (à utiliser dans decode.html);
-    let result = decode();
-    console.log(result);
 }
 
-function createMarquAlign(ligne, colonne) {
-    // Création du marqueur d'alignement
+// Création du marqueur d'alignement
+function createAlignMarker(ligne, colonne) {
     // Création du fond blanc
-    for(i = 0; i < 5; i++) {
-        for(j = 0; j < 5; j++) {
+    for (i = 0; i < 5; i++) {
+        for (j = 0; j < 5; j++) {
             data[ligne + i][colonne + j] = 0;
         }
     }
     // Première ligne
-    for(i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) {
         data[ligne][colonne + i] = 1;
     }
     // Deuxième ligne
@@ -121,22 +117,22 @@ function createMarquAlign(ligne, colonne) {
     data[ligne][colonne + 4] = 1;
     // Dernière ligne
     ligne++;
-    for(i = 0; i < 5; i++) {
+    for (i = 0; i < 5; i++) {
         data[ligne][colonne + i] = 1;
     }
 }
 
-function createMarqueur(ligne, colonne) {
+function createPositionMarker(ligne, colonne) {
     // Création des marges pour les marqueurs de position
-    for(i = -1; i < 8; i++) {
-        for(j = -1; j < 8; j++) {
-            if(ligne + i < nbPixels && ligne + i >= 0 && colonne + j < nbPixels && colonne + j >= 0) {
+    for (i = -1; i < 8; i++) {
+        for (j = -1; j < 8; j++) {
+            if (ligne + i < nbPixels && ligne + i >= 0 && colonne + j < nbPixels && colonne + j >= 0) {
                 data[ligne + i][colonne + j] = 0;
             }
         }
     }
     // Première rangée du marqueur
-    for(i = 0; i < 7; i++) {
+    for (i = 0; i < 7; i++) {
         data[ligne][colonne + i] = 1;
     }
     // Deuxième rangée du marqueur
@@ -144,7 +140,7 @@ function createMarqueur(ligne, colonne) {
     data[ligne][colonne] = 1;
     data[ligne][colonne + 6] = 1;
     // Troisième / quatrième et cinquième rangée du marqueur
-    for(i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++) {
         ligne++;
         data[ligne][colonne] = 1;
         data[ligne][colonne + 2] = 1;
@@ -158,19 +154,19 @@ function createMarqueur(ligne, colonne) {
     data[ligne][colonne + 6] = 1;
     // Dernière rangée du marqueur
     ligne++;
-    for(i = 0; i < 7; i++) {
+    for (i = 0; i < 7; i++) {
         data[ligne][colonne + i] = 1;
     }
 }
 
-// Ajout du type codé sur 2 caractères
-function addType(identificateur) {
-    let binary = ASCIItoBinary(identificateur);
-    if(binary.length != 16) {
-        console.log("Erreur, type incorrect (2 caractères maximum)");
+// Ajout de la clé codée sur 2 caractères
+function addKey(key) {
+    let binary = ASCIItoBinary(key);
+    if (binary.length != 16) {
+        console.log("Erreur, clé incorrecte (2 caractères maximum)");
         return;
     }
-    for(i = 0; i < binary.length; i++) {
+    for (i = 0; i < binary.length; i++) {
         data[0][i + 8] = binary[i];
     }
 }
@@ -180,18 +176,18 @@ function ASCIItoBinary(input) {
     // Curseur pour connaître la position dans l'array
     let cursor = 0;
     // Pour chaque caractère
-    for(i = 0; i < input.length; i++) {
+    for (i = 0; i < input.length; i++) {
         let binary = input[i].charCodeAt(0).toString(2);
         // Ajout des 0 avant le binaire pour avoir une taille de 8
         let tmp = "";
         let length = binary.length;
-        while(length < 8) {
+        while (length < 8) {
             tmp += "0";
             length++;
         }
         binary = tmp + binary;
         // Ajout dans le résultat
-        for(j = 0; j < 8; j++) {
+        for (j = 0; j < 8; j++) {
             result[cursor] = parseInt(binary[j]);
             cursor++;
         }
@@ -201,13 +197,13 @@ function ASCIItoBinary(input) {
 
 function drawQRCode(context) {
     // Affichage de chaque pixel en fonction de la valeur dans data
-    for(i = 0; i < nbPixels; i++) {
-        for(j = 0; j < nbPixels; j++) {
+    for (i = 0; i < nbPixels; i++) {
+        for (j = 0; j < nbPixels; j++) {
             drawPixel(context, i, j, data[i][j]);
         }
     }
     // Affichage des marges droites et en dessous
-    for(i = 0; i < nbPixels; i++) {
+    for (i = 0; i < nbPixels; i++) {
         drawPixel(context, i, nbPixels, 0);
         drawPixel(context, nbPixels, i, 0);
     }
@@ -216,7 +212,7 @@ function drawQRCode(context) {
 // Fonction pour afficher un pixel avec un rectangle dans le canvas
 function drawPixel(context, ligne, colonne, couleur) {
     // Définition de la couleur
-    if(couleur == 1) {
+    if (couleur == 1) {
         context.fillStyle = "black";
     } else {
         context.fillStyle = "white";
@@ -238,22 +234,22 @@ function encode(input) {
     let EXTCursor = 0;
     // Curseur pour le caractère *
     let STARTCursor = 0;
-    for(j = nbPixels - 1; j > 7; j--) {
-        for(i = nbPixels - 1; i > 7; i--) {
+    for (j = nbPixels - 1; j > 7; j--) {
+        for (i = nbPixels - 1; i > 7; i--) {
             // Si on est pas dans l'emplacement du marqueur d'alignement
-            if(!inAlignMarqu(i, j)) {
+            if (!inAlignMarker(i, j)) {
                 // Si le curseur n'est pas arrivé à la fin du caractère de début (*)
-                if(STARTCursor <= 7) {
-                    data[i][j] = + START[STARTCursor];
+                if (STARTCursor <= 7) {
+                    data[i][j] = +START[STARTCursor];
                     STARTCursor++;
                 } else {
-                    if(binary.length > cursor) {
-                        data[i][j] = + binary[cursor];
+                    if (binary.length > cursor) {
+                        data[i][j] = +binary[cursor];
                     } else {
                         // Si le curseur n'est pas arrivé à la fin du mot + le caractère EXT
-                        if(binary.length + 8 > cursor) {
+                        if (binary.length + 8 > cursor) {
                             // On ajoute le caractère EXT
-                            data[i][j] = + EXT[EXTCursor];
+                            data[i][j] = +EXT[EXTCursor];
                             EXTCursor++;
                         } else {
                             break;
@@ -268,118 +264,36 @@ function encode(input) {
     mask();
 }
 
-// Décodage du QR Code
-function decode() {
-    // Application du masque pour décoder le QR Code
-    mask();
-
-    // Vérification du type du QR Code
-    if(getType() != type) {
-        return "Mauvais type de QR Code";
-    }
-
-    // Le tableau de mots binaires
-    let binary = new Array();
-    // La lettre en binaire
-    let letter = new Array(8);
-    // Curseur pour parcourir les données
-    let cursor = 0;
-    // Curseur pour parcourir la lettre
-    let letterCursor = 0;
-    for(j = nbPixels - 1; j > 7; j--) {
-        for(i = nbPixels - 1; i > 7; i--) {
-            // Si on est pas dans l'emplacement du marqueur d'alignement ni dans le caractère de début
-            if(!inAlignMarqu(i, j) && !inSTART(i, j)) {
-                // Création de la lettre codée sous 8 bits
-                if(letterCursor <= 7) {
-                    letter[letterCursor] = data[i][j];
-                    letterCursor++;
-                } else {
-                    // Si la lettre est le caractère EXT, on arrête de décoder
-                    if(equals(letter, EXT)) {
-                        break;
-                    }
-                    // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
-                    binary[cursor] = letter;
-                    letterCursor = 0;
-                    letter = new Array(8);
-                    letter[0] = data[i][j];
-                    letterCursor++;
-                    cursor++;
-                }
-            }
-        }
-    }
-    // Conversion du tableau binaire en caractères ASCII
-    let result = "";
-    for(i = 0; i < binary.length; i++) {
-        result += String.fromCharCode(parseInt(binary[i].join(''), 2));
-    }
-    return result;
-}
-
-function getType() {
-    // Le tableau de mots binaires
-    let binary = new Array(2);
-    // La lettre en binaire
-    let letter = new Array(8);
-    // Curseur pour parcourir les données
-    let cursor = 0;
-    // Curseur pour parcourir la lettre
-    let letterCursor = 0;
-    for(i = 0; i <= 16; i++) {
-        // Création de la lettre codée sous 8 bits
-        if(letterCursor <= 7) {
-            letter[letterCursor] = data[0][8 + i];
-            letterCursor++;
-        } else {
-            // Sinon on ajoute la lettre dans le tableau de données et on reset les curseurs
-            binary[cursor] = letter;
-            letterCursor = 0;
-            letter = new Array(8);
-            letter[0] = data[0][8 + i];
-            letterCursor++;
-            cursor++;
-        }
-    }
-    // Conversion du tableau binaire en caractères ASCII
-    let result = "";
-    for(i = 0; i < 2; i++) {
-        result += String.fromCharCode(parseInt(binary[i].join(''), 2));
-    }
-    return result;
-}
-
 // Applique le masque sur tout le QR Code sauf le timing pattern et les marqueurs de position
 function mask() {
     // Applique le masque sur la marge haute 
-    for(i = 0; i < 8; i++) {
-        for(j = 8; j < nbPixels - 8; j++) {
-            if(i != 6) {
-                if((i + j) % 2 == 0) {
-                    data[i][j] = + !data[i][j];
+    for (i = 0; i < 8; i++) {
+        for (j = 8; j < nbPixels - 8; j++) {
+            if (i != 6) {
+                if ((i + j) % 2 == 0) {
+                    data[i][j] = +!data[i][j];
                 }
             }
         }
     }
     // Aplique le masque sr la marge gauche
-    for(i = 8; i < nbPixels - 8; i++) {
-        for(j = 0; j < 8; j++) {
-            if(j != 6) {
-                if((i + j) % 2 == 0) {
-                    data[i][j] = + !data[i][j];
+    for (i = 8; i < nbPixels - 8; i++) {
+        for (j = 0; j < 8; j++) {
+            if (j != 6) {
+                if ((i + j) % 2 == 0) {
+                    data[i][j] = +!data[i][j];
                 }
             }
         }
     }
     // Applique le masque sur le contenu du QR Code
-    for(i = 0; i < nbPixels; i++) {
-        for(j = 0; j < nbPixels; j++) {
-            if(i > 7 && j > 7) {
+    for (i = 0; i < nbPixels; i++) {
+        for (j = 0; j < nbPixels; j++) {
+            if (i > 7 && j > 7) {
                 // Si on est pas dans l'emplacement du marqueur d'alignement
-                if(!inAlignMarqu(i, j)) {
-                    if((i + j) % 2 == 0) {
-                        data[i][j] = + !data[i][j];
+                if (!inAlignMarker(i, j)) {
+                    if ((i + j) % 2 == 0) {
+                        data[i][j] = +!data[i][j];
                     }
                 }
             }
@@ -388,10 +302,6 @@ function mask() {
 }
 
 // Retourne vrai si on est dans l'emplacement du marqueur d'alignement
-function inAlignMarqu(ligne, colonne) {
+function inAlignMarker(ligne, colonne) {
     return ((ligne > 22 && ligne < 28) && (colonne > 22 && colonne < 28));
-}
-
-function inSTART(ligne, colonne) {
-    return ((ligne > nbPixels - 9 && colonne == nbPixels - 1));
 }
