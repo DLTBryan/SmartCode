@@ -65,6 +65,7 @@ function initVideo() {
 
 	video.addEventListener("canplay", function (ev) {
 		document.getElementById("containerVideo").setAttribute("width", video.videoWidth);
+		document.getElementById("containerVideo").removeChild(document.getElementById("loader"));
 		width = video.videoWidth;
 		if (!streaming) {
 
