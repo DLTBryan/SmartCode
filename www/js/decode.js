@@ -189,7 +189,6 @@ function findQRCode(src) {
 		if (0 < qrx && qrx + length < src.cols && 0 < qry && qry + length < src.rows) {
 
 			//let nbRotation = transformDetection(qrVertices, qrRec.center, qrPoint);
-			//console.log("nbRotation => %c%d",'color: white; background-color: orange; padding: 2px 5px; border-radius: 2px', nbRotation);
 			//en haut à gauche , en haut à droite, en bas à droite, en bas à gauche 
 			let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [qrVertices[0].x, qrVertices[0].y, qrVertices[1].x,
 				qrVertices[1].y, qrVertices[2].x, qrVertices[2].y,
@@ -240,20 +239,7 @@ function extractInformation(qrRoi) {
 
 	let largeurSuperPIxel = (qrRoi.cols + qrRoi.rows) / 2;
 	let largeurPixel = largeurSuperPIxel / 32;
-
-	// for(let i = 0; i < thresholdedImage.cols; ++i){
-	//   let tmp = new Array();
-	//   for(let j = 0; j < thresholdedImage.rows; ++j){
-	//     let p = thresholdedImage.ucharPtr(i, j)[0];
-	//     if(p === 255){
-	//       tmp.push(0);
-	//     }else{
-	//       tmp.push(1);
-	//     }
-	//   }
-	//   bits.push(tmp);
-	// }
-
+  
 	let c = largeurPixel / 2;
 	for (let i = 0; i < 32; ++i) {
 		let tmp = new Array();
