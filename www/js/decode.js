@@ -209,8 +209,7 @@ function findQRCode(src) {
 			let qrRoi = clone.roi(new cv.Rect(qrx, qry, length, length));
 
 			let array = extractInformation(qrRoi);
-			//cv.imshow("canvasResult", qrRoi);
-			// cv.imshow("canvasResult", thresholdedImage);
+
 			array = mask(array);
 			if (isAligned(array) && getKey(array) == key && getStart(array)) {
 				let result = decode(array);
@@ -224,7 +223,7 @@ function findQRCode(src) {
 		qrMat.delete();
 	}
 
-	//drawTiming(qrPoint);
+
 
 	deleteMats();
 
@@ -239,7 +238,7 @@ function extractInformation(qrRoi) {
 
 	let largeurSuperPIxel = (qrRoi.cols + qrRoi.rows) / 2;
 	let largeurPixel = largeurSuperPIxel / 32;
-  
+
 	let c = largeurPixel / 2;
 	for (let i = 0; i < 32; ++i) {
 		let tmp = new Array();
